@@ -29,7 +29,7 @@ export tenantId="XXX"
 4. Execute `up.sh` to deploy everything needed
 5. Grant admin consent for the created app registrations (Terraform will then be allowed to create app registrations and groups in Azure AD). This needs Azure Active Directory global admin access. Find more details on how to grant consent [here](https://docs.microsoft.com/en-us/azure/active-directory/manage-apps/grant-admin-consent).
 
-## Terraform project
+## Scaffold a Terraform project
 
 You will need to tell Terraform where to store its state file. To do so you need to customize your `main.tf` file based on the below example:
 ```
@@ -74,3 +74,11 @@ terraform init -input=false \
   -backend-config="storage_account_name=$saName" \
   -backend-config="container_name=$scName"
 ```
+
+## Disclaimer
+
+The `up.sh` script will map our Partner ID to the created Service Principal. Feel free to remove the marked lines if you don't like to support us.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+
