@@ -170,3 +170,17 @@ else
     echo "policy created in vault..."
 fi
 
+### 
+# The below lines will map our Partner id to the Terraform service principal
+# Feel free to delete the lines below
+
+export currentSubscription=$(az account show -o tsv | awk '{print $3}')
+
+az extension add --name managementpartner
+az login --tenant $tenantId --service-principal -u $spId -p $spSecret
+az managementpartner update --partner-id 3699617
+az logout
+
+az account set --subscription $currentSubscription
+###
+
