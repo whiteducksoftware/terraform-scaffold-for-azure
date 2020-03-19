@@ -13,7 +13,7 @@ After executing the below steps you will get:
 
 This project requires the following:
 * a Unix-Shell (we might support Powershell Core in the future, you can use [Azure Cloud Shell](http://shell.azure.com/) until then)
-* Azure CLI `az`
+* Azure CLI
 * the executing user needs Subscription owner access (to allow Terraform to add future Service Principals as contributors)
 
 ## Get started
@@ -49,18 +49,22 @@ We do not recommend to store any secrets and credentials in code. Therefore ever
 ``` Bash
 #!/bin/bash
 
-# sets subscription; needs to be exported first
+# customize your subscription id and resource group name
+export subscriptionId="00000000-0000-0000-0000-000000000000"
+export rg="my-rg"
+
+# sets subscription;
 az account set --subscription $subscriptionId
 
 # get vault
-export vaultName=$(az keyvault list --subscription=$subscriptionId -g $rg -o tsv | awk '{print $3}')
+export vaultName=$(az keyvault list --subscription=$subscriptionId -g $rg --query '[0].{name:name}' -o tsv)
 
 ## extracts and exports secrets
-export saKey=$(az keyvault secret show --subscription=$subscriptionId --vault-name="$vaultName" --name sa-key -o tsv | awk '{print $5}')
-export saName=$(az keyvault secret show --subscription=$subscriptionId --vault-name="$vaultName" --name sa-name -o tsv | awk '{print $5}')
-export scName=$(az keyvault secret show --subscription=$subscriptionId --vault-name="$vaultName" --name sc-name -o tsv | awk '{print $5}')
-export spSecret=$(az keyvault secret show --subscription=$subscriptionId --vault-name="$vaultName" --name sp-secret -o tsv | awk '{print $5}')
-export spId=$(az keyvault secret show --subscription=$subscriptionId --vault-name="$vaultName" --name sp-id -o tsv | awk '{print $5}')
+export saKey=$(az keyvault secret show --subscription=$subscriptionId --vault-name="$vaultName" --name sa-key --query value -o tsv)
+export saName=$(az keyvault secret show --subscription=$subscriptionId --vault-name="$vaultName" --name sa-name --query value -o tsv)
+export scName=$(az keyvault secret show --subscription=$subscriptionId --vault-name="$vaultName" --name sc-name --query value -o tsv)
+export spSecret=$(az keyvault secret show --subscription=$subscriptionId --vault-name="$vaultName" --name sp-secret --query value -o tsv)
+export spId=$(az keyvault secret show --subscription=$subscriptionId --vault-name="$vaultName" --name sp-id --query value -o tsv)
 
 # exports secrets
 export ARM_SUBSCRIPTION_ID=$subscriptionId
@@ -80,5 +84,3 @@ terraform init -input=false \
 The `up.sh` script will map our Partner ID to the created Service Principal. Feel free to remove the marked lines if you don't like to support us.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-

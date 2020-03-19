@@ -11,6 +11,9 @@ if [ -f "./vars.sh" ]; then
   source ./vars.sh
 fi
 
+# set subscription
+az account set --subscription $subscriptionId
+
 # creates resource group
 az group create --name "$rg" --location "$location"
 
@@ -103,7 +106,7 @@ else
 fi
 
 # gets storage account key
-export saKey=$(az storage account keys list --subscription=$subscriptionId --resource-group $rg --account-name $saName --query [0].value -o tsv )
+export saKey=$(az storage account keys list --subscription=$subscriptionId --resource-group $rg --account-name $saName --query [0].value -o tsv)
 
 if test $? -ne 0
 then
@@ -174,13 +177,12 @@ fi
 # The below lines will map our Partner id to the Terraform service principal
 # Feel free to delete the lines below
 
-export currentSubscription=$(az account show -o tsv | awk '{print $3}')
+export currentSubscription=$(az account show --query id -o tsv)
 
 az extension add --name managementpartner
 az login --tenant $tenantId --service-principal -u $spId -p $spSecret
-az managementpartner update --partner-id 3699617
+az managementpartner create --partner-id 3699617
 az logout
-
-az account set --subscription $currentSubscription
+az login
 ###
 
