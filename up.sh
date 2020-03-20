@@ -186,12 +186,20 @@ fi
 # The below lines will map our Partner id to the Terraform service principal
 # Feel free to delete the lines below
 
-export currentSubscription=$(az account show --query id -o tsv)
+echo "---"
+read -r -p "Do you like to add our Partner ID? [y/N] " response
 
-az extension add --name managementpartner
-az login --tenant $tenantId --service-principal -u $spId -p $spSecret
-az managementpartner create --partner-id 3699617
-az logout
-az login
+if [[ "$response" =~ ^([yY][eE][sS]|[yY])$ ]]
+then
+  export currentSubscription=$(az account show --query id -o tsv)
+
+  az extension add --name managementpartner
+  az login --tenant $tenantId --service-principal -u $spId -p $spSecret
+  az managementpartner create --partner-id 3699617
+  az logout
+  echo "---"
+  echo "Please login."
+  az login
+fi
 ###
 
