@@ -15,7 +15,7 @@ fi
 az account set --subscription $subscriptionId
 
 # creates resource group
-az group create --name "$rg" --location "$location"
+az group create --name "$rg" --location "$location" --tags environment=$tag --subscription $subscriptionId
 
 if test $? -ne 0
 then
@@ -84,18 +84,27 @@ fi
 export userMail=$(az account show --query user.name -o tsv)
 export userId=$(az ad user show --id $userMail --query objectId -o tsv)
 
+if test $? -ne 0
+then
+    echo "local user id cound't be fetched..."
+    exit
+else
+    echo "local user fetched..."
+fi
+
 # creates resources
 az deployment group create \
     --name $name \
     --resource-group $rg \
     --template-file ./resources.json \
     --subscription $subscriptionId \
-    --mode Complete \
+    --mode Incremental \
     --parameters "vault_name=$vaultName" \
                  "sa_name=$saName" \
                  "sc_name=$scName" \
                  "tenant_id=$tenantId" \
-                 "user_id=$userId"
+                 "user_id=$userId" \
+                 "tag"=$tag
 
 if test $? -ne 0
 then

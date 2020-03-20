@@ -16,6 +16,9 @@
     },
     "user_id": {
       "type": "String"
+    },
+    "tag": {
+      "type": "String"
     }
   },
   "variables": {},
@@ -25,6 +28,9 @@
       "apiVersion": "2016-10-01",
       "name": "[parameters('vault_name')]",
       "location": "westeurope",
+      "tags": {
+        "environment": "[parameters('tag')]"
+      },
       "properties": {
         "sku": {
           "family": "A",
@@ -59,6 +65,9 @@
       "apiVersion": "2019-04-01",
       "name": "[parameters('sa_name')]",
       "location": "westeurope",
+      "tags": {
+        "environment": "[parameters('tag')]"
+      },
       "sku": {
         "name": "Standard_LRS",
         "tier": "Standard"
