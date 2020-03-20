@@ -187,7 +187,7 @@ fi
 # Feel free to delete the lines below
 
 echo "---"
-read -r -p "Do you like to add our Partner ID? [y/N] " response
+read -r -p "Do you like to map our Partner ID? [y/N] " response
 
 if [[ "$response" =~ ^([yY][eE][sS]|[yY])$ ]]
 then
