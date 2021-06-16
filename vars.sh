@@ -5,7 +5,7 @@
 export name="tfstate"
 export suffix="prod"
 export location="West Europe"
-
+export arm_location="westeurope"
 export id="$(echo $RANDOM)"
 
 export spName="tfprovision-$suffix-sp"

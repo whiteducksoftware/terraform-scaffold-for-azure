@@ -44,25 +44,6 @@ export spId=$(echo $sp | awk '{print $1}')
 # add ADD API permissions (read and create apps and groups)
 az ad app permission add \
     --id $spId \
-    --api 00000002-0000-0000-c000-000000000000 \
-    --api-permissions \
-    a42657d6-7f20-40e3-b6f0-cee03008a62a=Scope \
-    78c8a3c8-a07e-4b9e-af1b-b5ccab50a175=Scope \
-    970d6fa6-214a-4a9b-8513-08fad511e2fd=Scope \
-    824c81eb-e3f8-4ee6-8f6d-de7f50d565b7=Role \
-    78c8a3c8-a07e-4b9e-af1b-b5ccab50a175=Role
-
-if test $? -ne 0
-then
-    echo "service principal couldn't be authorized..."
-    exit
-else
-    echo "service principal authorized..."
-fi
-
-# add ADD API permissions (read and create apps and groups)
-az ad app permission add \
-    --id $spId \
     --api 00000003-0000-0000-c000-000000000000 \
     --api-permissions \
     0e263e50-5827-48a4-b97c-d940288653c7=Scope \
@@ -104,7 +85,8 @@ az deployment group create \
                  "sc_name=$scName" \
                  "tenant_id=$tenantId" \
                  "user_id=$userId" \
-                 "tag"=$tag
+                 "tag"=$tag \
+                 "location"=$arm_location
 
 if test $? -ne 0
 then
