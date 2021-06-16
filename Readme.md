@@ -78,6 +78,20 @@ terraform init -input=false \
   -backend-config="storage_account_name=$saName" \
   -backend-config="container_name=$scName"
 ```
+## Azuread provider configuration
+```
+terraform {
+  required_providers {
+    azuread = {
+      source  = "hashicorp/azuread"
+      version = "=1.5.0"
+    }
+  }
+}
+provider "azuread" {
+  use_microsoft_graph = true
+}
+```
 
 ## Disclaimer
 
