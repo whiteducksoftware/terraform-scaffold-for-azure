@@ -1,5 +1,6 @@
 #!/bin/bash
 # used to bootstrap infrastructure required my Terraform
+set -e
 
 # sources secrets; dev only
 if [ -f "./.creds.sh" ]; then
@@ -44,33 +45,18 @@ export spId=$(echo $sp | awk '{print $1}')
 # add ADD API permissions (read and create apps and groups)
 az ad app permission add \
     --id $spId \
-    --api 00000002-0000-0000-c000-000000000000 \
-    --api-permissions \
-    a42657d6-7f20-40e3-b6f0-cee03008a62a=Scope \
-    78c8a3c8-a07e-4b9e-af1b-b5ccab50a175=Scope \
-    970d6fa6-214a-4a9b-8513-08fad511e2fd=Scope \
-    824c81eb-e3f8-4ee6-8f6d-de7f50d565b7=Role \
-    78c8a3c8-a07e-4b9e-af1b-b5ccab50a175=Role
-
-if test $? -ne 0
-then
-    echo "service principal couldn't be authorized..."
-    exit
-else
-    echo "service principal authorized..."
-fi
-
-# add ADD API permissions (read and create apps and groups)
-az ad app permission add \
-    --id $spId \
     --api 00000003-0000-0000-c000-000000000000 \
     --api-permissions \
     0e263e50-5827-48a4-b97c-d940288653c7=Scope \
     c5366453-9fb0-48a5-a156-24f0c49a4b84=Scope \
     4e46008b-f24c-477d-8fff-7bb4ec7aafe0=Scope \
+    e1fe6dd8-ba31-4d61-89e7-88639da4683d=Scope \
+    bdfbf15f-ee85-4955-8675-146e8e5296b5=Scope \
     bf7b1a76-6e77-406b-b258-bf5c7720e98f=Role \
     19dbc75e-c2e2-444c-a770-ec69d8559fc7=Role \
-    62a82d76-70ea-41e2-9197-370581804d09=Role
+    62a82d76-70ea-41e2-9197-370581804d09=Role \
+    18a4783c-866b-4cc7-a460-3d5e5662c884=Role \
+    1bfefb4e-e0b5-418b-a88f-73c46d2cc8e9=Role
 
 if test $? -ne 0
 then
@@ -104,7 +90,8 @@ az deployment group create \
                  "sc_name=$scName" \
                  "tenant_id=$tenantId" \
                  "user_id=$userId" \
-                 "tag"=$tag
+                 "tag"=$tag \
+                 "location"=$location
 
 if test $? -ne 0
 then

@@ -34,7 +34,7 @@ export tenantId="XXX"
 You will need to tell Terraform where to store its state file. To do so you need to customize your `main.tf` file based on the below example:
 ```
 provider "azurerm" {
-  version = "~> 2.1"
+  version = "~> 2.66"
   features {}
 }
 
@@ -77,6 +77,20 @@ terraform init -input=false \
   -backend-config="access_key=$saKey" \
   -backend-config="storage_account_name=$saName" \
   -backend-config="container_name=$scName"
+```
+## Azuread provider configuration
+```
+terraform {
+  required_providers {
+    azuread = {
+      source  = "hashicorp/azuread"
+      version = "~>1.6"
+    }
+  }
+}
+provider "azuread" {
+  use_microsoft_graph = true
+}
 ```
 
 ## Disclaimer
