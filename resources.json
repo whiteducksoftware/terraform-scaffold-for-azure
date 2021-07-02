@@ -72,7 +72,7 @@
         "environment": "[parameters('tag')]"
       },
       "sku": {
-        "name": "Standard_LRS",
+        "name": "Standard_ZRS",
         "tier": "Standard"
       },
       "kind": "Storage",
