@@ -34,7 +34,7 @@ export tenantId="XXX"
 You will need to tell Terraform where to store its state file. To do so you need to customize your `main.tf` file based on the below example:
 ```
 provider "azurerm" {
-  version = "~> 2.1"
+  version = "~> 2.66"
   features {}
 }
 
@@ -84,7 +84,7 @@ terraform {
   required_providers {
     azuread = {
       source  = "hashicorp/azuread"
-      version = "=1.5.0"
+      version = "~>1.6"
     }
   }
 }

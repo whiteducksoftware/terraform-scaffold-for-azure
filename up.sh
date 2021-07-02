@@ -91,7 +91,7 @@ az deployment group create \
                  "tenant_id=$tenantId" \
                  "user_id=$userId" \
                  "tag"=$tag \
-                 "location"=$arm_location
+                 "location"=$location
 
 if test $? -ne 0
 then
