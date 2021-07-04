@@ -1,15 +1,39 @@
 #!/bin/bash
 # used to bootstrap infrastructure required my Terraform
-set -e
+set -a -e
 
-# sources secrets; dev only
-if [ -f "./.creds.sh" ]; then
-  source ./.creds.sh
+# check and export subscription/tenant if needed
+if [ "$subscriptionId" = "" ]
+  then
+    export subscriptionId=$(az account show --query id -o tsv)
+    if test $? -ne 0
+      then
+        echo "subscription couldn't be exported..."
+        exit
+      else
+        echo "subscription exported..."
+    fi
+  else
+    echo "subscription details are set..."
+fi
+
+if [ "$tenantId" = "" ]
+  then
+    export tenantId=$(az account show --query homeTenantId -o tsv)
+    if test $? -ne 0
+      then
+        echo "tenant couldn't be exported..."
+        exit
+      else
+        echo "tenant exported..."
+    fi
+  else
+    echo "tenant details are set..."
 fi
 
 # sources variables
-if [ -f "./vars.sh" ]; then
-  source ./vars.sh
+if [ -f ".env" ]; then
+  source .env
 fi
 
 # set subscription
@@ -189,4 +213,3 @@ then
   az login
 fi
 ###
-
