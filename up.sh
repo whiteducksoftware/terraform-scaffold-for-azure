@@ -114,8 +114,8 @@ az deployment group create \
                  "sc_name=$scName" \
                  "tenant_id=$tenantId" \
                  "user_id=$userId" \
-                 "tag"=$tag \
-                 "location"=$location
+                 "tag=$tag" \
+                 "location=$location"
 
 if test $? -ne 0
 then
