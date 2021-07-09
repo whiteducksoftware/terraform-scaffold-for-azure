@@ -9,7 +9,6 @@ param (
     $tenantId = (az account show --query homeTenantId -o tsv)
 )
 
-$ErrorActionPreference = "Stop"
 $id = Get-Random -Minimum 1000 -Maximum 10000
 
 $configuration = Get-content .\config.json | ConvertFrom-Json
