@@ -90,7 +90,7 @@ else {
 
 # creates resources
 az deployment group create `
---name $name `
+--name $configuration.name `
 --resource-group $rg `
 --template-file .\resources.json `
 --subscription $subscriptionId `
@@ -126,19 +126,19 @@ else {
 # saves storage account details to vault
 az keyvault secret set --vault-name $vaultName `
 --name "sa-key" `
---value "$saKey"
+--value $saKey
 az keyvault secret set --vault-name $vaultName `
 --name "sa-name" `
---value "$saName"
+--value $saName
 az keyvault secret set --vault-name $vaultName `
 --name "sc-name" `
---value "$scName"
+--value $scName
 az keyvault secret set --vault-name $vaultName `
 --name "sp-id" `
---value "$spId"
+--value $spId
 az keyvault secret set --vault-name $vaultName `
 --name "sp-secret" `
---value "$spSecret"
+--value $spSecret
 
 if ($LASTEXITCODE -eq "2") {
     Write-Host "secrets could not be saved..."
