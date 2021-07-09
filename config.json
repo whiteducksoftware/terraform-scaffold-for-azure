@@ -1,5 +1,5 @@
 {
     "name": "tfstate",
-    "suffix": "dbr",
+    "suffix": "prod",
     "location": "westeurope"
 }
