@@ -1,8 +1,6 @@
-# change values as needed
-$name = "tfstate"
-$suffix = "dbrtest"
-$env:location = "westeurope"
 $id = Get-Random -Minimum 1000 -Maximum 10000
+
+$configuration = Get-content .\config.json | ConvertFrom-Json
 
 $env:spName = "tfprovision-$suffix-sp"
 $env:rg = "$name-$suffix-rg"
