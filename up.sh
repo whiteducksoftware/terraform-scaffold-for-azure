@@ -2,6 +2,111 @@
 # used to bootstrap infrastructure required my Terraform
 set -a -e
 
+# check and export resource group name if needed
+if [ "$rg" = "" ]
+  then
+    export rg="enter-name"
+    if test $? -ne 0
+      then
+        echo "failed to set resource group name..."
+        exit
+      else
+        echo "$rg"" resource group exported..."
+    fi
+  else
+    echo "resource group details are already set..."
+fi
+
+# check and export location name if needed
+if [ "$location" = "" ]
+  then
+    export location="enter-name"
+    if test $? -ne 0
+      then
+        echo "location couldn't be exported..."
+        exit
+      else
+        echo "$location"" location exported..."
+    fi
+  else
+    echo "location details are set..."
+fi
+
+# check and export service principal name if needed
+if [ "$spName" = "" ]
+  then
+    export spName="enter-name"
+    if test $? -ne 0
+      then
+        echo "spName couldn't be exported..."
+        exit
+      else
+        echo "$spName"" spName exported..."
+    fi
+  else
+    echo "spName details are set..."
+fi
+
+# check and export deployment name if needed
+if [ "$deploymentName" = "" ]
+  then
+    export deploymentName="enter-name"
+    if test $? -ne 0
+      then
+        echo "failed to set deploymentName..."
+        exit
+      else
+        echo "$deploymentName"" deploymentName exported..."
+    fi
+  else
+    echo "deploymentName details are already set..."
+fi
+
+# check and export key vault name if needed
+if [ "$vaultName" = "" ]
+  then
+    export vaultName="enter-name"
+    if test $? -ne 0
+      then
+        echo "failed to set vaultName..."
+        exit
+      else
+        echo "$vaultName"" vaultName exported..."
+    fi
+  else
+    echo "vaultName details are already set..."
+fi
+
+# check and export storage account name if needed
+if [ "$saName" = "" ]
+  then
+    export saName="enter-name"
+    if test $? -ne 0
+      then
+        echo "failed to set saName..."
+        exit
+      else
+        echo "$saName"" saName exported..."
+    fi
+  else
+    echo "saName details are already set..."
+fi
+
+# check and export secret name if needed
+if [ "$scName" = "" ]
+  then
+    export scName="enter-name"
+    if test $? -ne 0
+      then
+        echo "failed to set scName..."
+        exit
+      else
+        echo "$scName"" scName exported..."
+    fi
+  else
+    echo "scName details are already set..."
+fi
+
 # check and export subscription/tenant if needed
 if [ "$subscriptionId" = "" ]
   then
@@ -93,6 +198,13 @@ fi
 # get local user
 export userMail=$(az account show --query user.name -o tsv)
 export userId=$(az ad user list --filter "mail eq '$userMail'" --query "[].objectId" -o tsv)
+
+if [ "$userId" = "" ]
+  then
+    echo "$userId"" is the userId..."
+  else
+    echo "userId could not be retrieved, check Azure AD to make sure email exists..."
+fi
 
 if test $? -ne 0
 then
