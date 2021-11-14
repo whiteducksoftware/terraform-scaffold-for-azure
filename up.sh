@@ -2,6 +2,46 @@
 # used to bootstrap infrastructure required my Terraform
 set -a -e
 
+# check and export subscription/tenant if needed
+if [ "$subscriptionId" = "" ]
+  then
+    export subscriptionId=$(az account show --query id -o tsv)
+    if test $? -ne 0
+      then
+        echo "subscription couldn't be exported..."
+        exit
+      else
+        echo "subscription exported..."
+    fi
+  else
+    echo "subscription details are set..."
+fi
+
+if [ "$tenantId" = "" ]
+  then
+    export tenantId=$(az account show --query homeTenantId -o tsv)
+    if test $? -ne 0
+      then
+        echo "tenant couldn't be exported..."
+        exit
+      else
+        echo "tenant exported..."
+    fi
+  else
+    echo "tenant details are set..."
+fi
+
+# sources variables
+if [ -f ".env" ]; then
+  source .env
+fi
+
+################################################################
+# If not using .env for names
+# Make sure to change the enter-name values
+# ex: export rg="enter-name"
+################################################################
+
 # check and export resource group name if needed
 if [ "$rg" = "" ]
   then
@@ -105,40 +145,6 @@ if [ "$scName" = "" ]
     fi
   else
     echo "scName details are already set..."
-fi
-
-# check and export subscription/tenant if needed
-if [ "$subscriptionId" = "" ]
-  then
-    export subscriptionId=$(az account show --query id -o tsv)
-    if test $? -ne 0
-      then
-        echo "subscription couldn't be exported..."
-        exit
-      else
-        echo "subscription exported..."
-    fi
-  else
-    echo "subscription details are set..."
-fi
-
-if [ "$tenantId" = "" ]
-  then
-    export tenantId=$(az account show --query homeTenantId -o tsv)
-    if test $? -ne 0
-      then
-        echo "tenant couldn't be exported..."
-        exit
-      else
-        echo "tenant exported..."
-    fi
-  else
-    echo "tenant details are set..."
-fi
-
-# sources variables
-if [ -f ".env" ]; then
-  source .env
 fi
 
 # set subscription
