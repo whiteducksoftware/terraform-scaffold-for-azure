@@ -63,7 +63,7 @@ else
 fi
 
 # gets id and secret
-export spSecret=$(echo $sp | awk '{print $4}')
+export spSecret=$(echo $sp | awk '{print $3}')
 export spId=$(echo $sp | awk '{print $1}')
 
 # add ADD API permissions (read and create apps and groups)
