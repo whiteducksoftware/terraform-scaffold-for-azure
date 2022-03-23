@@ -90,7 +90,7 @@ else {
 az deployment group create `
 --name $configuration.name `
 --resource-group $rg `
---template-file .\resources.json `
+--template-file .\resources.bicep `
 --subscription $subscriptionId `
 --mode Incremental `
 --parameters "vault_name=$vaultName" `
