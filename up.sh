@@ -63,7 +63,7 @@ else
 fi
 
 # gets id and secret
-export spSecret=$(echo $sp | awk '{print $4}')
+export spSecret=$(echo $sp | awk '{print $3}')
 export spId=$(echo $sp | awk '{print $1}')
 
 # add ADD API permissions (read and create apps and groups)
@@ -106,7 +106,7 @@ fi
 az deployment group create \
     --name $name \
     --resource-group $rg \
-    --template-file ./resources.json \
+    --template-file ./resources.bicep \
     --subscription $subscriptionId \
     --mode Incremental \
     --parameters "vault_name=$vaultName" \
@@ -115,7 +115,9 @@ az deployment group create \
                  "tenant_id=$tenantId" \
                  "user_id=$userId" \
                  "tag=$tag" \
-                 "location=$location"
+                 "location=$location" \
+                 "vault_sku=$vaultSku" \
+                 "sa_sku=$saSku"
 
 if test $? -ne 0
 then
