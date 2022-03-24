@@ -18,6 +18,8 @@ $tag = "$($configuration.suffix)"
 $saName = "stac0$($configuration.name)0$($configuration.suffix)0$id"
 $scName = "blob0$($configuration.name)0$($configuration.suffix)0$id"
 $vaultName = "akv-$($configuration.name)-$($configuration.suffix)-$id"
+$saSku = $configuration.saSku
+$vaultSku = $configuration.vaultSku
 
 # set subscription
 az account set --subscription $subscriptionId
@@ -99,7 +101,9 @@ az deployment group create `
                 "tenant_id=$tenantId" `
                 "user_id=$userId" `
                 "tag=$tag" `
-                "location=$($configuration.location)"
+                "location=$($configuration.location)" `
+                "vault_sku=$vaultSku" `
+                "sa_sku=$saSku"
 
 if ($LASTEXITCODE -eq "2") {
     Write-Host "deployment could not be created..."

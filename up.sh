@@ -115,7 +115,9 @@ az deployment group create \
                  "tenant_id=$tenantId" \
                  "user_id=$userId" \
                  "tag=$tag" \
-                 "location=$location"
+                 "location=$location" \
+                 "vault_sku=$vaultSku" \
+                 "sa_sku=$saSku"
 
 if test $? -ne 0
 then

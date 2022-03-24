@@ -1,5 +1,7 @@
 param vault_name string
+param vault_sku string
 param sa_name string
+param sa_sku string
 param sc_name string
 param tenant_id string
 param user_id string
@@ -15,7 +17,7 @@ resource tf_akv 'Microsoft.KeyVault/vaults@2021-04-01-preview' = {
   properties: {
     sku: {
       family: 'A'
-      name: 'standard'
+      name: vault_sku
     }
     tenantId: tenant_id
     accessPolicies: [
@@ -51,7 +53,7 @@ resource tf_sa 'Microsoft.Storage/storageAccounts@2021-04-01' = {
     environment: tag
   }
   sku: {
-    name: 'Standard_ZRS'
+    name: sa_sku
   }
   kind: 'Storage'
   properties: {
