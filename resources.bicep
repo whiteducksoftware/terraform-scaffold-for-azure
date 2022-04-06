@@ -55,7 +55,7 @@ resource tf_sa 'Microsoft.Storage/storageAccounts@2021-04-01' = {
   sku: {
     name: sa_sku
   }
-  kind: 'Storage'
+  kind: 'StorageV2'
   properties: {
     networkAcls: {
       bypass: 'AzureServices'
