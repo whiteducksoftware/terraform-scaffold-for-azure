@@ -64,6 +64,7 @@ resource tf_sa 'Microsoft.Storage/storageAccounts@2021-04-01' = {
       defaultAction: 'Allow'
     }
     supportsHttpsTrafficOnly: true
+    minimumTlsVersion: 'TLS1_2'
     encryption: {
       services: {
         file: {
