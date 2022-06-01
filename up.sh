@@ -92,7 +92,7 @@ fi
 
 # get local user
 export userMail=$(az account show --query user.name -o tsv)
-export userId=$(az ad user list --filter "mail eq '$userMail'" --query "[].objectId" -o tsv)
+export userId=$(az ad user list --filter "mail eq '$userMail'" --query "[].id" -o tsv)
 
 if test $? -ne 0
 then
