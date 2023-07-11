@@ -8,7 +8,7 @@ param user_id string
 param tag string
 param location string
 
-resource tf_akv 'Microsoft.KeyVault/vaults@2021-11-01-preview' = {
+resource tf_akv 'Microsoft.KeyVault/vaults@2022-07-01' = {
   name: vault_name
   location: location
   tags: {
@@ -46,7 +46,7 @@ resource tf_akv 'Microsoft.KeyVault/vaults@2021-11-01-preview' = {
   }
 }
 
-resource tf_sa 'Microsoft.Storage/storageAccounts@2021-09-01' = {
+resource tf_sa 'Microsoft.Storage/storageAccounts@2022-09-01' = {
   name: sa_name
   location: location
   tags: {
@@ -79,7 +79,7 @@ resource tf_sa 'Microsoft.Storage/storageAccounts@2021-09-01' = {
   }
 }
 
-resource tf_sc 'Microsoft.Storage/storageAccounts/blobServices/containers@2021-09-01' = {
+resource tf_sc 'Microsoft.Storage/storageAccounts/blobServices/containers@2022-09-01' = {
   name: '${sa_name}/default/${sc_name}'
   dependsOn: [
     tf_sa
