@@ -52,7 +52,7 @@ fi
 
 # creates a service principal
 # needs to be owner to be able to enable future service principals
-export sp=$(az ad sp create-for-rbac --name $spName --role="Owner" --scopes="/subscriptions/$subscriptionId" --years 99 -o tsv)
+export sp=$(az ad sp create-for-rbac --name $spName --role="Owner" --scopes="/subscriptions/$subscriptionId" --years 99)
 
 if test $? -ne 0
 then
@@ -63,19 +63,17 @@ else
 fi
 
 # gets id and secret
-export spSecret=$(echo $sp | awk '{print $3}')
-export spId=$(echo $sp | awk '{print $1}')
+export spSecret=$(echo $sp | jq -r '.password')
+export spId=$(echo $sp | jq -r '.appId')
 
-# add ADD API permissions (read and create apps and groups)
+# add ADD API permissions - Group.Create, GroupMember.ReadWrite.All, User.Read.All
 az ad app permission add \
     --id $spId \
     --api 00000003-0000-0000-c000-000000000000 \
     --api-permissions \
     bf7b1a76-6e77-406b-b258-bf5c7720e98f=Role \
-    19dbc75e-c2e2-444c-a770-ec69d8559fc7=Role \
-    62a82d76-70ea-41e2-9197-370581804d09=Role \
-    18a4783c-866b-4cc7-a460-3d5e5662c884=Role \
-    1bfefb4e-e0b5-418b-a88f-73c46d2cc8e9=Role
+    dbaae8cf-10b5-4b86-a4a1-f871c94c6695=Role \
+    df021288-bdef-4463-88db-98f22de89214=Role
 
 if test $? -ne 0
 then
@@ -83,6 +81,17 @@ then
     exit
 else
     echo "service principal authorized..."
+fi
+
+# update roles
+az role assignment create --assignee $spId --scope "/subscriptions/$subscriptionId" --role "Monitoring Metrics Publisher"
+
+if test $? -ne 0
+then
+    echo "roles couldn't be saved..."
+    exit
+else
+    echo "roles are saved in vault..."
 fi
 
 # get local user
@@ -104,14 +113,14 @@ az deployment group create \
     --subscription $subscriptionId \
     --mode Incremental \
     --parameters "vault_name=$vaultName" \
+                 "vault_sku=$vaultSku" \
                  "sa_name=$saName" \
+                 "sa_sku=$saSku" \
                  "sc_name=$scName" \
                  "tenant_id=$tenantId" \
                  "user_id=$userId" \
                  "tag=$tag" \
-                 "location=$location" \
-                 "vault_sku=$vaultSku" \
-                 "sa_sku=$saSku"
+                 "location=$location"
 
 if test $? -ne 0
 then
@@ -165,17 +174,6 @@ then
     exit
 else
     echo "secrets are saved in vault..."
-fi
-
-# update roles
-az role assignment create --assignee $spId --scope "/subscriptions/$subscriptionId" --role "Monitoring Metrics Publisher"
-
-if test $? -ne 0
-then
-    echo "roles couldn't be saved..."
-    exit
-else
-    echo "roles are saved in vault..."
 fi
 
 # add vault access policy
