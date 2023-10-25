@@ -35,8 +35,8 @@ if (-not $tenantId) {
 }
 Write-Host "Tenant ID set to $tenantId"
 
-# Load independent variables from .env.ps file
-$envVars = Get-Content .env.ps | Out-String | ConvertFrom-StringData
+# Load independent variables from .env.powershell file
+$envVars = Get-Content .env.powershell | Out-String | ConvertFrom-StringData
 
 # Declare dependent variables
 $spName = "sp-$($envVars['name'])-$($envVars['suffix'])"
@@ -115,15 +115,15 @@ az deployment group create `
     --subscription "$subscriptionId" `
     --mode Incremental `
     --parameters `
-        vault_name="$vaultName" `
-        vault_sku="$($envVars['vaultSku'])" `
-        sa_name="$saName" `
-        sa_sku="$($envVars['saSku'])" `
-        sc_name="$scName" `
-        tenant_id="$tenantId" `
-        user_id="$userId" `
-        tag="$tag" `
-        location="$($envVars['location'])"
+    vault_name="$vaultName" `
+    vault_sku="$($envVars['vaultSku'])" `
+    sa_name="$saName" `
+    sa_sku="$($envVars['saSku'])" `
+    sc_name="$scName" `
+    tenant_id="$tenantId" `
+    user_id="$userId" `
+    tag="$tag" `
+    location="$($envVars['location'])"
 if (-not $?) {
     throw "Failed to create deployment"
 }
