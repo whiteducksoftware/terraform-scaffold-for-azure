@@ -1,6 +1,14 @@
 #!/bin/bash
 # Used to bootstrap infrastructure required by Terraform
-set -e
+
+set -e  # Exit on error
+set -o pipefail  # Exit on pipeline failure
+
+# Check for jq installation
+if ! command -v jq >/dev/null; then
+    echo "Error: jq is not installed."
+    exit 1
+fi
 
 # Central error handling
 error_handler() {
@@ -34,15 +42,22 @@ fi
 az account set --subscription "$subscriptionId"
 
 # Creates resource group
-az group create --name "$rg" --location "$location" --tags environment="$tag" --subscription "$subscriptionId"
+az group create --name "$rg" \
+    --location "$location" \
+    --tags environment="$tag" \
+    --subscription "$subscriptionId"
 echo "Resources group created..."
 
 # Creates a service principal
 # Needs to be owner to be able to enable future service principals
-export sp=$(az ad sp create-for-rbac --name "$spName" --role="Owner" --scopes="/subscriptions/$subscriptionId" --years 99)
+export sp=$(az ad sp create-for-rbac \
+    --name "$spName" \
+    --role="Owner" \
+    --scopes="/subscriptions/$subscriptionId" \
+    --years 99)
 echo "Service principal created..."
 
-# Gets id and secret
+# Set service principal id and secret variables
 export spSecret=$(echo "$sp" | jq -r '.password')
 export spId=$(echo "$sp" | jq -r '.appId')
 
@@ -57,8 +72,11 @@ az ad app permission add \
 echo "Service principal authorized..."
 
 # Update roles
-az role assignment create --assignee "$spId" --scope "/subscriptions/$subscriptionId" --role "Monitoring Metrics Publisher"
-echo "Roles are saved in vault..."
+az role assignment create \
+    --assignee "$spId" \
+    --scope "/subscriptions/$subscriptionId" \
+    --role "Monitoring Metrics Publisher"
+echo "Service principal role updated..."
 
 # Get local user
 export userId=$(az ad signed-in-user show --query id -o tsv)
@@ -83,7 +101,11 @@ az deployment group create \
 echo "Deployment created..."
 
 # Gets storage account key
-export saKey=$(az storage account keys list --subscription="$subscriptionId" --resource-group "$rg" --account-name "$saName" --query [0].value -o tsv)
+export saKey=$(az storage account keys list \
+    --subscription="$subscriptionId" \
+    --resource-group "$rg" \
+    --account-name "$saName" \
+    --query [0].value -o tsv)
 echo "Storage container created..."
 
 # Saves storage account details to vault
@@ -98,7 +120,7 @@ az keyvault secret set --vault-name "$vaultName" \
     --value "$scName"
 echo "Secrets are saved in vault..."
 
-# Save secrets to vault
+# Save service principal details to vault
 az keyvault secret set --vault-name "$vaultName" \
     --name "sp-id" \
     --value "$spId"
@@ -111,11 +133,10 @@ echo "Secrets are saved in vault..."
 az keyvault set-policy --name "$vaultName" --spn "$spId" --secret-permissions get list
 echo "Policy created in vault..."
 
-# Mapping Partner ID (Optional)
+# Map Partner ID (optional)
 echo "---"
 read -r -p "Do you like to map our Partner ID? [y/N] " response
 if [[ "$response" =~ ^([yY][eE][sS]|[yY])$ ]]; then
-    export currentSubscription=$(az account show --query id -o tsv)
     az extension add --name managementpartner
     az login --tenant "$tenantId" --service-principal -u "$spId" -p "$spSecret"
     az managementpartner create --partner-id 3699617

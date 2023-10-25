@@ -1,7 +1,0 @@
-{
-    "name": "tfstate",
-    "suffix": "prod",
-    "location": "westeurope",
-    "saSku": "Standard_ZRS",
-    "vaultSku": "standard"
-}
