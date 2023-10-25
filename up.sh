@@ -49,7 +49,7 @@ az group create --name "$rg" \
 echo "Resources group created..."
 
 # Creates a service principal
-# Needs to be owner to be able to enable future service principals
+# Needs to be owner to create managed identities and assign roles
 export sp=$(az ad sp create-for-rbac \
     --name "$spName" \
     --role="Owner" \

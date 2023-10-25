@@ -17,7 +17,7 @@ This project requires the following:
 - Bash or PowerShell (you can use [Azure Cloud Shell](http://shell.azure.com/))
 - for Bash you need to have [jq](https://stedolan.github.io/jq/) installed
 - Azure CLI (authenticated)
-- the executing user needs Subscription owner access (to allow Terraform to add future Service Principals as contributors) as well as the Application Developer role in AAD (to create the Service Principal)
+- the executing user needs Subscription owner access (to give owner access to the Service Principal for creating managed identities and assigning roles) as well as the Application Developer role in AAD (to create the Service Principal)
 
 ## Get started with Bash
 
@@ -61,7 +61,7 @@ provider "azurerm" {
 }
 ```
 
-[Backend Docs for azurerm](https://developer.hashicorp.com/terraform/language/settings/backends/azurerm)
+[Terraform Backend Docs for azurerm](https://developer.hashicorp.com/terraform/language/settings/backends/azurerm)
 
 [Azure Provider Docs](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs)
 
