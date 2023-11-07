@@ -52,7 +52,7 @@ terraform {
     }
   }
   backend "azurerm" {
-    key                  = "azure.tfstate"
+    key = "azure.tfstate"
   }
 }
 
