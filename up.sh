@@ -48,18 +48,23 @@ az group create --name "$rg" \
     --subscription "$subscriptionId"
 echo "Resources group created..."
 
-# Creates a service principal
+# create service principal if  not exists already
 # Needs to be owner to create managed identities and assign roles
-export sp=$(az ad sp create-for-rbac \
+if  [[ $(az ad sp list --display-name $spName --query "[].displayName" -o tsv) = "$spName" ]];  then
+echo "Service principal already exists..."
+export spId=$(az ad sp list --display-name $spName --query "[].appId" -o tsv)
+else
+   export sp=$(az ad sp create-for-rbac \
     --name "$spName" \
     --role="Owner" \
     --scopes="/subscriptions/$subscriptionId" \
     --years 99)
 echo "Service principal created..."
-
 # Set service principal id and secret variables
 export spSecret=$(echo "$sp" | jq -r '.password')
 export spId=$(echo "$sp" | jq -r '.appId')
+fi
+
 
 # Add ADD API permissions - Group.Create, GroupMember.ReadWrite.All, User.Read.All
 az ad app permission add \
@@ -124,10 +129,20 @@ echo "Secrets are saved in vault..."
 az keyvault secret set --vault-name "$vaultName" \
     --name "sp-id" \
     --value "$spId"
+
+# checks if a password secret already exists and only sets secret value if password doesn't exist
+if  [[ $(az keyvault secret list --vault-name "$vaultName"  --query "[].name" -o tsv) = "$spSecret" ]];  then
+echo "SP secret already exists..."
+else if [ -z "$spSecret" ] # if the variable $spSecret is set then proceed else prompt the user to enter a value
+then
+  echo "spSecret is not set. Please enter the value:"
+  read spSecret
+fi
 az keyvault secret set --vault-name "$vaultName" \
     --name "sp-secret" \
     --value "$spSecret"
 echo "Secrets are saved in vault..."
+fi
 
 # Add vault access policy
 az keyvault set-policy --name "$vaultName" --spn "$spId" --secret-permissions get list
