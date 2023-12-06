@@ -131,17 +131,21 @@ az keyvault secret set --vault-name "$vaultName" \
     --value "$spId"
 
 # checks if a password secret already exists and only sets secret value if password doesn't exist
-if  [[ $(az keyvault secret list --vault-name "$vaultName"  --query "[].name" -o tsv) = "$spSecret" ]];  then
-echo "SP secret already exists..."
-else if [ -z "$spSecret" ] # if the variable $spSecret is set then proceed else prompt the user to enter a value
+if [  -n "$(az keyvault secret list --vault-name "$vaultName"  --query "[].name" | grep "sp-secret")" ]
 then
+  echo "SP secret already exists..."
+elif [ -z "$spSecret" ]; then
   echo "spSecret is not set. Please enter the value:"
   read spSecret
-fi
-az keyvault secret set --vault-name "$vaultName" \
+  az keyvault secret set --vault-name "$vaultName" \
     --name "sp-secret" \
     --value "$spSecret"
-echo "Secrets are saved in vault..."
+  echo "Secrets are saved in vault..."
+elif [ -n "$spSecret" ]; then
+  az keyvault secret set --vault-name "$vaultName" \
+    --name "sp-secret" \
+    --value "$spSecret"
+  echo "Secrets are saved in vault..."
 fi
 
 # Add vault access policy
