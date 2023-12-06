@@ -60,22 +60,23 @@ if (-not $?) {
 }
 Write-Host "Resource group created..."
 
-# Creates a service principal
+# Creates a service principal if it doesn't exist
 # Needs to be owner to create managed identities and assign roles
-$sp = az ad sp create-for-rbac `
-    --name "$spName" `
-    --role="Owner" `
-    --scopes="/subscriptions/$subscriptionId" `
-    --years 99 `
-    -o json | ConvertFrom-Json
-if (-not $?) {
-    throw "Failed to create service principal"
+$sp = az ad sp list --display-name $spName --query "[].displayName" -o tsv
+if ($sp -eq $spName) {
+    Write-Host "Service principal already exists..."
+    $spId = az ad sp list --display-name $spName --query "[].appId" -o tsv
+} else {
+    $sp = az ad sp create-for-rbac `
+        --name $spName `
+        --role "Owner" `
+        --scopes "/subscriptions/$subscriptionId" `
+        --years 99 | ConvertFrom-Json
+    Write-Host "Service principal created..."
+    # Set service principal id and secret variables
+    $spSecret = $sp.password
+    $spId = $sp.appId
 }
-Write-Host "Service principal created..."
-
-# Set service principal id and secret variables
-$spId = $sp.appId
-$spSecret = $sp.password
 
 # Add ADD API permissions - Group.Create, GroupMember.ReadWrite.All, User.Read.All
 az ad app permission add `
@@ -160,11 +161,22 @@ Write-Host "Storage account details saved to vault..."
 az keyvault secret set --vault-name "$vaultName" `
     --name "sp-id" `
     --value "$spId"
-az keyvault secret set --vault-name "$vaultName" `
-    --name "sp-secret" `
-    --value "$spSecret"
-if (-not $?) {
-    throw "Failed to save service principal details to vault"
+# Check if secret already exists and if not, set it
+$secretList = az keyvault secret list --vault-name $vaultName --query "[].name" -o tsv
+if ($secretList -match "sp-secret") {
+    Write-Host "SP secret already exists..."
+} elseif ([string]::IsNullOrEmpty($spSecret)) {
+    Write-Host "spSecret is not set. Please enter the value:"
+    $spSecret = Read-Host
+    az keyvault secret set --vault-name $vaultName `
+        --name "sp-secret" `
+        --value $spSecret
+    Write-Host "Secrets are saved in vault..."
+} elseif (-not [string]::IsNullOrEmpty($spSecret)) {
+    az keyvault secret set --vault-name $vaultName `
+        --name "sp-secret" `
+        --value $spSecret
+    Write-Host "Secrets are saved in vault..."
 }
 Write-Host "Service principal details saved to vault..."
 
