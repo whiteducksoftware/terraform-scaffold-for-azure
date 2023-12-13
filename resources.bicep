@@ -79,9 +79,12 @@ resource tf_sa 'Microsoft.Storage/storageAccounts@2022-09-01' = {
   }
 }
 
+resource tf_sb 'Microsoft.Storage/storageAccounts/blobServices@2022-09-01' existing = {
+  parent: tf_sa
+  name: 'default'
+}
+
 resource tf_sc 'Microsoft.Storage/storageAccounts/blobServices/containers@2022-09-01' = {
-  name: '${sa_name}/default/${sc_name}'
-  dependsOn: [
-    tf_sa
-  ]
+  parent: tf_sb
+  name: sc_name
 }
