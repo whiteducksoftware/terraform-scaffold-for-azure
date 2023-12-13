@@ -66,7 +66,8 @@ $sp = az ad sp list --display-name $spName --query "[].displayName" -o tsv
 if ($sp -eq $spName) {
     Write-Host "Service principal already exists..."
     $spId = az ad sp list --display-name $spName --query "[].appId" -o tsv
-} else {
+}
+else {
     $sp = az ad sp create-for-rbac `
         --name $spName `
         --role "Owner" `
@@ -165,14 +166,16 @@ az keyvault secret set --vault-name "$vaultName" `
 $secretList = az keyvault secret list --vault-name $vaultName --query "[].name" -o tsv
 if ($secretList -match "sp-secret") {
     Write-Host "SP secret already exists..."
-} elseif ([string]::IsNullOrEmpty($spSecret)) {
+}
+elseif ([string]::IsNullOrEmpty($spSecret)) {
     Write-Host "spSecret is not set. Please enter the value:"
     $spSecret = Read-Host
     az keyvault secret set --vault-name $vaultName `
         --name "sp-secret" `
         --value $spSecret
     Write-Host "Secrets are saved in vault..."
-} elseif (-not [string]::IsNullOrEmpty($spSecret)) {
+}
+else {
     az keyvault secret set --vault-name $vaultName `
         --name "sp-secret" `
         --value $spSecret
