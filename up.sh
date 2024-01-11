@@ -110,7 +110,7 @@ export saKey=$(az storage account keys list \
     --subscription="$subscriptionId" \
     --resource-group "$rg" \
     --account-name "$saName" \
-    --query [0].value -o tsv)
+    --query '[0].value' -o tsv)
 echo "Storage container created..."
 
 # Saves storage account details to vault
