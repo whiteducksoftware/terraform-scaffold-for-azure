@@ -71,9 +71,8 @@ az ad app permission add \
     --id "$spId" \
     --api 00000003-0000-0000-c000-000000000000 \
     --api-permissions \
-    bf7b1a76-6e77-406b-b258-bf5c7720e98f=Role \
     dbaae8cf-10b5-4b86-a4a1-f871c94c6695=Role \
-    df021288-bdef-4463-88db-98f22de89214=Role
+    df021288-bdef-4463-88db-98f22de89214=Role 
 echo "Service principal authorized..."
 
 # Update roles
@@ -82,6 +81,12 @@ az role assignment create \
     --scope "/subscriptions/$subscriptionId" \
     --role "Monitoring Metrics Publisher"
 echo "Service principal role updated..."
+
+az role assignment create \
+    --assignee $"$spId" \
+    --role "Key Vault Secrets Officer" \
+    --scopes "/subscriptions/$subscriptionId/resourceGroups/$rg/providers/Microsoft.KeyVault/vaults/$vaultName"
+echo "Role for Service Principal set"
 
 # Get local user
 export userId=$(az ad signed-in-user show --query id -o tsv)
@@ -148,9 +153,9 @@ elif [ -n "$spSecret" ]; then
   echo "Secrets are saved in vault..."
 fi
 
-# Add vault access policy
-az keyvault set-policy --name "$vaultName" --spn "$spId" --secret-permissions get list
-echo "Policy created in vault..."
+# Add vault access policy RBAC
+az role assignment create --assignee $"$spId" --role "Key Vault Secrets Officer" --scopes "/subscriptions/$subscriptionId/resourceGroups/$rg/providers/Microsoft.KeyVault/vaults/$vaultName"
+echo "Role for Service Principal set"
 
 # Map Partner ID (optional)
 echo "---"
