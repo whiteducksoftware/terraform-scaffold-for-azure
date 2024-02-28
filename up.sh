@@ -82,13 +82,6 @@ az role assignment create \
     --role "Monitoring Metrics Publisher"
 echo "Service principal role updated..."
 
-# Add vault access
-az role assignment create \
-    --assignee $"$spId" \
-    --role "Key Vault Secrets Officer" \
-    --scopes "/subscriptions/$subscriptionId/resourceGroups/$rg/providers/Microsoft.KeyVault/vaults/$vaultName"
-echo "Role for Service Principal set"
-
 # Get local user
 export userId=$(az ad signed-in-user show --query id -o tsv)
 echo "Local user fetched..."
@@ -136,6 +129,11 @@ az keyvault secret set --vault-name "$vaultName" \
     --name "sp-id" \
     --value "$spId"
 
+# Save subscription id to vault
+az keyvault secret set --vault-name "$vaultName" \
+    --name "subscription-id" \
+    --value "$subscriptionId"
+
 # checks if a password secret already exists and only sets secret value if password doesn't exist
 if [  -n "$(az keyvault secret list --vault-name "$vaultName"  --query "[].name" | grep "sp-secret")" ]
 then
@@ -153,6 +151,13 @@ elif [ -n "$spSecret" ]; then
     --value "$spSecret"
   echo "Secrets are saved in vault..."
 fi
+
+# Add vault access
+az role assignment create \
+    --assignee "$spId" \
+    --role "Key Vault Secrets Officer" \
+    --scope "/subscriptions/$subscriptionId/resourceGroups/$rg/providers/Microsoft.KeyVault/vaults/$vaultName"
+echo "Role for Service Principal set"
 
 # Map Partner ID (optional)
 echo "---"
