@@ -162,6 +162,12 @@ Write-Host "Storage account details saved to vault..."
 az keyvault secret set --vault-name "$vaultName" `
     --name "sp-id" `
     --value "$spId"
+
+# Save subscription id to vault
+az keyvault secret set --vault-name "$vaultName" `
+    --name "subscription-id" `
+    --value "$subscriptionId"
+
 # Check if secret already exists and if not, set it
 $secretList = az keyvault secret list --vault-name $vaultName --query "[].name" -o tsv
 if ($secretList -match "sp-secret") {
@@ -183,12 +189,15 @@ else {
 }
 Write-Host "Service principal details saved to vault..."
 
-# Add vault access policy
-az keyvault set-policy --name "$vaultName" --spn "$spId" --secret-permissions get list
+# Add vault access
+az role assignment create `
+    --assignee "$spId" `
+    --role "Key Vault Secrets Officer" `
+    --scope "/subscriptions/$subscriptionId/resourceGroups/$rg/providers/Microsoft.KeyVault/vaults/$vaultName"
 if (-not $?) {
-    throw "Failed to add vault access policy"
+    throw "Failed to add vault access"
 }
-Write-Host "Vault access policy added..."
+Write-Host "Vault Access updated..."
 
 # Map Partner ID (optional)
 Write-Host "---"
