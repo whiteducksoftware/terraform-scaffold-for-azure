@@ -65,12 +65,12 @@ export spSecret=$(echo "$sp" | jq -r '.password')
 export spId=$(echo "$sp" | jq -r '.appId')
 fi
 
-
 # Add ADD API permissions - Group.Create, GroupMember.ReadWrite.All, User.Read.All
 az ad app permission add \
     --id "$spId" \
     --api 00000003-0000-0000-c000-000000000000 \
     --api-permissions \
+    62a82d76-70ea-41e2-9197-370581804d09=Role \
     dbaae8cf-10b5-4b86-a4a1-f871c94c6695=Role \
     df021288-bdef-4463-88db-98f22de89214=Role 
 echo "Service principal authorized..."
@@ -82,6 +82,7 @@ az role assignment create \
     --role "Monitoring Metrics Publisher"
 echo "Service principal role updated..."
 
+# Add vault access
 az role assignment create \
     --assignee $"$spId" \
     --role "Key Vault Secrets Officer" \
@@ -152,10 +153,6 @@ elif [ -n "$spSecret" ]; then
     --value "$spSecret"
   echo "Secrets are saved in vault..."
 fi
-
-# Add vault access policy RBAC
-az role assignment create --assignee $"$spId" --role "Key Vault Secrets Officer" --scopes "/subscriptions/$subscriptionId/resourceGroups/$rg/providers/Microsoft.KeyVault/vaults/$vaultName"
-echo "Role for Service Principal set"
 
 # Map Partner ID (optional)
 echo "---"
