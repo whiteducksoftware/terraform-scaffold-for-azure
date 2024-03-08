@@ -195,9 +195,9 @@ az role assignment create `
     --role "Key Vault Secrets Officer" `
     --scope "/subscriptions/$subscriptionId/resourceGroups/$rg/providers/Microsoft.KeyVault/vaults/$vaultName"
 if (-not $?) {
-    throw "Failed to add vault access"
+    throw "Failed to create role assignment"
 }
-Write-Host "Vault Access updated..."
+Write-Host "Role assignment created"
 
 # Map Partner ID (optional)
 Write-Host "---"
