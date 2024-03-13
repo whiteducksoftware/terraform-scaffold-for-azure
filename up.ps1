@@ -84,7 +84,7 @@ az ad app permission add `
     --id "$spId" `
     --api 00000003-0000-0000-c000-000000000000 `
     --api-permissions `
-    bf7b1a76-6e77-406b-b258-bf5c7720e98f=Role `
+    62a82d76-70ea-41e2-9197-370581804d09=Role `
     dbaae8cf-10b5-4b86-a4a1-f871c94c6695=Role `
     df021288-bdef-4463-88db-98f22de89214=Role
 if (-not $?) {
