@@ -84,7 +84,7 @@ az ad app permission add `
     --id "$spId" `
     --api 00000003-0000-0000-c000-000000000000 `
     --api-permissions `
-    bf7b1a76-6e77-406b-b258-bf5c7720e98f=Role `
+    62a82d76-70ea-41e2-9197-370581804d09=Role `
     dbaae8cf-10b5-4b86-a4a1-f871c94c6695=Role `
     df021288-bdef-4463-88db-98f22de89214=Role
 if (-not $?) {
@@ -162,6 +162,12 @@ Write-Host "Storage account details saved to vault..."
 az keyvault secret set --vault-name "$vaultName" `
     --name "sp-id" `
     --value "$spId"
+
+# Save subscription id to vault
+az keyvault secret set --vault-name "$vaultName" `
+    --name "subscription-id" `
+    --value "$subscriptionId"
+
 # Check if secret already exists and if not, set it
 $secretList = az keyvault secret list --vault-name $vaultName --query "[].name" -o tsv
 if ($secretList -match "sp-secret") {
@@ -183,12 +189,15 @@ else {
 }
 Write-Host "Service principal details saved to vault..."
 
-# Add vault access policy
-az keyvault set-policy --name "$vaultName" --spn "$spId" --secret-permissions get list
+# Add vault access
+az role assignment create `
+    --assignee "$spId" `
+    --role "Key Vault Secrets Officer" `
+    --scope "/subscriptions/$subscriptionId/resourceGroups/$rg/providers/Microsoft.KeyVault/vaults/$vaultName"
 if (-not $?) {
-    throw "Failed to add vault access policy"
+    throw "Failed to create role assignment"
 }
-Write-Host "Vault access policy added..."
+Write-Host "Role assignment created"
 
 # Map Partner ID (optional)
 Write-Host "---"

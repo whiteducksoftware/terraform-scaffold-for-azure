@@ -65,15 +65,14 @@ export spSecret=$(echo "$sp" | jq -r '.password')
 export spId=$(echo "$sp" | jq -r '.appId')
 fi
 
-
 # Add ADD API permissions - Group.Create, GroupMember.ReadWrite.All, User.Read.All
 az ad app permission add \
     --id "$spId" \
     --api 00000003-0000-0000-c000-000000000000 \
     --api-permissions \
-    bf7b1a76-6e77-406b-b258-bf5c7720e98f=Role \
+    62a82d76-70ea-41e2-9197-370581804d09=Role \
     dbaae8cf-10b5-4b86-a4a1-f871c94c6695=Role \
-    df021288-bdef-4463-88db-98f22de89214=Role
+    df021288-bdef-4463-88db-98f22de89214=Role 
 echo "Service principal authorized..."
 
 # Update roles
@@ -130,6 +129,11 @@ az keyvault secret set --vault-name "$vaultName" \
     --name "sp-id" \
     --value "$spId"
 
+# Save subscription id to vault
+az keyvault secret set --vault-name "$vaultName" \
+    --name "subscription-id" \
+    --value "$subscriptionId"
+
 # checks if a password secret already exists and only sets secret value if password doesn't exist
 if [  -n "$(az keyvault secret list --vault-name "$vaultName"  --query "[].name" | grep "sp-secret")" ]
 then
@@ -148,9 +152,12 @@ elif [ -n "$spSecret" ]; then
   echo "Secrets are saved in vault..."
 fi
 
-# Add vault access policy
-az keyvault set-policy --name "$vaultName" --spn "$spId" --secret-permissions get list
-echo "Policy created in vault..."
+# Add vault access
+az role assignment create \
+    --assignee "$spId" \
+    --role "Key Vault Secrets Officer" \
+    --scope "/subscriptions/$subscriptionId/resourceGroups/$rg/providers/Microsoft.KeyVault/vaults/$vaultName"
+echo "Role for Service Principal set"
 
 # Map Partner ID (optional)
 echo "---"
