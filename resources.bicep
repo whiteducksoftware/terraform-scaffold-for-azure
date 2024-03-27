@@ -7,6 +7,8 @@ param tenant_id string
 param user_id string
 param tag string
 param location string
+param roleId string = 'b86a8fe4-44ce-4948-aee5-eccb2c155cd7' // Key Vault Officer
+
 
 resource tf_akv 'Microsoft.KeyVault/vaults@2022-07-01' = {
   name: vault_name
@@ -20,26 +22,7 @@ resource tf_akv 'Microsoft.KeyVault/vaults@2022-07-01' = {
       name: vault_sku
     }
     tenantId: tenant_id
-    accessPolicies: [
-      {
-        tenantId: tenant_id
-        objectId: user_id
-        permissions: {
-          keys: []
-          secrets: [
-            'get'
-            'list'
-            'set'
-            'delete'
-            'backup'
-            'restore'
-            'recover'
-          ]
-          certificates: []
-          storage: []
-        }
-      }
-    ]
+    enableRbacAuthorization: true
     enabledForDeployment: false
     enableSoftDelete: true
     softDeleteRetentionInDays: 30
@@ -87,4 +70,15 @@ resource tf_sb 'Microsoft.Storage/storageAccounts/blobServices@2022-09-01' exist
 resource tf_sc 'Microsoft.Storage/storageAccounts/blobServices/containers@2022-09-01' = {
   parent: tf_sb
   name: sc_name
+}
+
+// Assign Role Key Vault Officer to User
+resource keyVaultAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(subscription().subscriptionId, tf_akv.name, user_id)
+  scope: tf_akv
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', roleId)
+    principalId: user_id
+    principalType: 'User'
+  }
 }
