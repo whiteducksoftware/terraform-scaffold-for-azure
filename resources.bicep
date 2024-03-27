@@ -77,7 +77,7 @@ resource keyVaultAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01'
   name: guid(subscription().subscriptionId, tf_akv.name, user_id)
   scope: tf_akv
   properties: {
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', roleId) //TODO: kann man hier die Rolle benennen? -> nochmal dazu schreiben
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', roleId)
     principalId: user_id
     principalType: 'User'
   }
