@@ -79,7 +79,7 @@ else {
     $spId = $sp.appId
 }
 
-# Add ADD API permissions - Group.Create, GroupMember.ReadWrite.All, User.Read.All
+# Add ADD API permissions - Group.ReadWrite.All, GroupMember.ReadWrite.All, User.Read.All
 az ad app permission add `
     --id "$spId" `
     --api 00000003-0000-0000-c000-000000000000 `
