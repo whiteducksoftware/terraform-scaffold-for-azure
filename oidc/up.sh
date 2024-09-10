@@ -98,7 +98,6 @@ az deployment group create \
                  "location=$location"
 echo "Deployment created..."
 
-
 # Add Storage Blob Data Owner role assignment
 az role assignment create \
     --assignee "$spId" \
