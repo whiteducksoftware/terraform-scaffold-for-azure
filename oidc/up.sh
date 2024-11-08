@@ -57,10 +57,9 @@ else
    export sp=$(az ad sp create-for-rbac \
     --name "$spName" \
     --role="Owner" \
-    --scopes="/subscriptions/$subscriptionId" \
-    --years 99)
+    --scopes="/subscriptions/$subscriptionId")
 echo "Service principal created..."
-# Set service principal id variable
+export spSecret=$(echo "$sp" | jq -r '.password')
 export spId=$(echo "$sp" | jq -r '.appId')
 # Create federated credential
 az ad app federated-credential create --id "$spId" --parameters ./federated_credential.json
