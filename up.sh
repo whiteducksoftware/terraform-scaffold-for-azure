@@ -86,19 +86,25 @@ else
     export spId=$(echo "$sp" | jq -r '.appId')
     
     # Assign Contributor role for resource management
-    az role assignment create \
+    if ! az role assignment create \
         --assignee "$spId" \
         --scope "/subscriptions/$subscriptionId" \
-        --role "Contributor"
+        --role "Contributor"; then
+        echo "Error: Failed to assign Contributor role"
+        exit 1
+    fi
     echo "Contributor role assigned..."
     
     # Assign Role Based Access Control Administrator with condition
-    az role assignment create \
+    if ! az role assignment create \
         --assignee "$spId" \
         --scope "/subscriptions/$subscriptionId" \
         --role "Role Based Access Control Administrator" \
         --condition "$RBAC_CONDITION" \
-        --condition-version "2.0"
+        --condition-version "2.0"; then
+        echo "Error: Failed to assign Role Based Access Control Administrator role"
+        exit 1
+    fi
     echo "Role Based Access Control Administrator role assigned with condition..."
 fi
 
