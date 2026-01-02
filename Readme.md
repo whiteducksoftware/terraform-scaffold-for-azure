@@ -17,7 +17,7 @@ This project requires the following:
 - Bash or PowerShell (you can use [Azure Cloud Shell](http://shell.azure.com/))
 - for Bash you need to have [jq](https://stedolan.github.io/jq/) installed
 - Azure CLI (authenticated)
-- the executing user needs Subscription owner access (to give owner access to the Service Principal for creating managed identities and assigning roles) as well as the Application Developer role in AAD (to create the Service Principal)
+- the executing user needs Subscription Owner access (or Contributor + User Access Administrator/Role Based Access Control Administrator) to create resources and assign Contributor and Role Based Access Control Administrator roles to the Service Principal, as well as the Application Developer role in Entra ID (to create the Service Principal)
 
 ## Get started with Bash
 
