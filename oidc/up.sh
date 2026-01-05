@@ -211,11 +211,11 @@ if [[ "$response" =~ ^([yY][eE][sS]|[yY])$ ]]; then
     az logout
     AZURE_CORE_LOGIN_EXPERIENCE_V2=off az login --tenant "$tenantId"
     az account set --subscription "$subscriptionId"
-    
-    # Remove the service principal secret
-    keyId=$(az ad app credential list --id "$spId" --query "[0].keyId" -o tsv)
-    if [ -n "$keyId" ]; then
-        az ad app credential delete --id "$spId" --key-id "$keyId"
-        echo "Temporary secret for Partner ID mapping removed..."
-    fi
+fi
+
+# Remove the service principal secret (OIDC-only, no secret needed)
+keyId=$(az ad app credential list --id "$spId" --query "[0].keyId" -o tsv)
+if [ -n "$keyId" ]; then
+    az ad app credential delete --id "$spId" --key-id "$keyId"
+    echo "Temporary secret removed (OIDC-only)..."
 fi

@@ -219,11 +219,11 @@ if ($response -imatch "^(y|yes)$") {
     $env:AZURE_CORE_LOGIN_EXPERIENCE_V2 = "off"
     az login --tenant "$tenantId"
     az account set --subscription "$subscriptionId"
-    
-    # Remove the service principal secret
-    $keyId = az ad app credential list --id "$spId" --query "[0].keyId" -o tsv
-    if ($keyId) {
-        az ad app credential delete --id "$spId" --key-id "$keyId"
-        Write-Host "Temporary secret for Partner ID mapping removed..."
-    }
+}
+
+# Remove the service principal secret (OIDC-only, no secret needed)
+$keyId = az ad app credential list --id "$spId" --query "[0].keyId" -o tsv
+if ($keyId) {
+    az ad app credential delete --id "$spId" --key-id "$keyId"
+    Write-Host "Temporary secret removed (OIDC-only)..."
 }
