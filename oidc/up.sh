@@ -209,7 +209,13 @@ if [[ "$response" =~ ^([yY][eE][sS]|[yY])$ ]]; then
     az login --tenant "$tenantId" --service-principal -u "$spId" -p "$spSecret"
     az managementpartner create --partner-id 3699617
     az logout
-    echo "---"
-    echo "Please login."
-    az login
+    AZURE_CORE_LOGIN_EXPERIENCE_V2=off az login --tenant "$tenantId"
+    az account set --subscription "$subscriptionId"
+    
+    # Remove the service principal secret
+    keyId=$(az ad app credential list --id "$spId" --query "[0].keyId" -o tsv)
+    if [ -n "$keyId" ]; then
+        az ad app credential delete --id "$spId" --key-id "$keyId"
+        echo "Temporary secret for Partner ID mapping removed..."
+    fi
 fi
