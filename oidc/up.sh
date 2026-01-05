@@ -205,7 +205,7 @@ echo "Storage Blob Data Owner role assigned..."
 echo "---"
 read -p "Do you like to map our Partner ID? [y/N] " response
 if [[ "$response" =~ ^([yY][eE][sS]|[yY])$ ]]; then
-    az extension add --name managementpartner
+    az extension add --name managementpartner --upgrade --yes
     az login --tenant "$tenantId" --service-principal -u "$spId" -p "$spSecret"
     az managementpartner create --partner-id 3699617
     az logout
