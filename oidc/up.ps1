@@ -212,7 +212,7 @@ Write-Host "Storage Blob Data Owner role assigned..."
 Write-Host "---"
 $response = Read-Host "Do you like to map our Partner ID? [y/N]"
 if ($response -imatch "^(y|yes)$") {
-    az extension add --name managementpartner
+    az extension add --name managementpartner --upgrade --yes
     az login --tenant "$tenantId" --service-principal -u "$spId" -p "$spSecret"
     az managementpartner create --partner-id 3699617
     az logout
