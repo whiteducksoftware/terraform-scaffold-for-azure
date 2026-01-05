@@ -220,78 +220,6 @@ Match specific environment:
 }
 ```
 
-### GitHub Actions Workflow Example
-
-```yaml
-name: Terraform
-
-on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
-
-permissions:
-  id-token: write
-  contents: read
-
-jobs:
-  terraform:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Azure Login
-        uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-
-      - name: Terraform Init
-        run: terraform init
-
-      - name: Terraform Plan
-        run: terraform plan
-```
-
----
-
-### Azure DevOps Pipeline Example
-
-```yaml
-trigger:
-  - main
-
-pool:
-  vmImage: ubuntu-latest
-
-stages:
-  - stage: Terraform
-    jobs:
-      - job: TerraformPlan
-        steps:
-          - task: AzureCLI@2
-            displayName: 'Terraform Init & Plan'
-            inputs:
-              azureSubscription: '<serviceConnectionName>'
-              scriptType: 'bash'
-              scriptLocation: 'inlineScript'
-              addSpnToEnvironment: true
-              inlineScript: |
-                export ARM_CLIENT_ID=$servicePrincipalId
-                export ARM_OIDC_TOKEN=$idToken
-                export ARM_TENANT_ID=$tenantId
-                export ARM_SUBSCRIPTION_ID=$(az account show --query id -o tsv)
-                export ARM_USE_OIDC=true
-                
-                terraform init
-                terraform plan
-```
-
 ---
 
 ## Scaffold a Terraform project
@@ -303,7 +231,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "~> 3.77"
+      version = "~> 4.57"
     }
   }
   backend "azurerm" {
@@ -327,7 +255,7 @@ terraform {
   required_providers {
     azuread = {
       source  = "hashicorp/azuread"
-      version = "~> 2.44"
+      version = "~> 3.7"
     }
   }
 }
@@ -341,6 +269,6 @@ provider "azuread" {
 
 ## Disclaimer
 
-The `up.sh` script asks you whether you would like to map our Partner ID to the created Service Principal. Feel free to opt-out or remove the marked lines if you don't like to support us.
+The setup scripts (`up.sh` and `up.ps1`) ask you whether you would like to map our Partner ID to the created Service Principal. Feel free to opt-out or remove the marked lines if you don't like to support us.
 
 > THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
