@@ -10,41 +10,43 @@ resource tf_sa 'Microsoft.Storage/storageAccounts@2025-06-01' = {
   name: sa_name
   location: location
   tags: {
-    Environment: tag
+    environment: tag
   }
   sku: {
     name: sa_sku
   }
   kind: 'StorageV2'
   properties: {
-    accessTier: 'Hot'
-    allowBlobPublicAccess: false
-    allowSharedKeyAccess: true
-    minimumTlsVersion: 'TLS1_2'
     networkAcls: {
       bypass: 'AzureServices'
-      defaultAction: 'Deny'
+      virtualNetworkRules: []
+      ipRules: []
+      defaultAction: 'Allow'
     }
     supportsHttpsTrafficOnly: true
+    minimumTlsVersion: 'TLS1_2'
+    encryption: {
+      services: {
+        file: {
+          enabled: true
+        }
+        blob: {
+          enabled: true
+        }
+      }
+      keySource: 'Microsoft.Storage'
+    }
   }
 }
 
 // Blob Service
-resource tf_sb 'Microsoft.Storage/storageAccounts/blobServices@2025-06-01' = {
+resource tf_sb 'Microsoft.Storage/storageAccounts/blobServices@2025-06-01' existing = {
   parent: tf_sa
   name: 'default'
-  properties: {
-    deleteRetentionPolicy: {
-      enabled: false
-    }
-  }
 }
 
 // Storage Container
 resource tf_sc 'Microsoft.Storage/storageAccounts/blobServices/containers@2025-06-01' = {
   parent: tf_sb
   name: sc_name
-  properties: {
-    publicAccess: 'None'
-  }
 }
