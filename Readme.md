@@ -5,8 +5,7 @@ This repo contains everything to get started with Terraform on Azure. Choose the
 | Method | Folder | Description |
 |--------|--------|-------------|
 | **Client Secret + Key Vault** | Root (`/`) | Classic approach using service principal with client secret stored in Key Vault |
-| **GitHub Actions OIDC** | [`oidc-github/`](oidc-github/) | Workload Identity Federation for GitHub Actions (no secrets needed) |
-| **Azure DevOps OIDC** | [`oidc-ado/`](oidc-ado/) | Workload Identity Federation for Azure DevOps Pipelines (no secrets needed) |
+| **OIDC (GitHub/Azure DevOps)** | [`oidc/`](oidc/) | Workload Identity Federation for GitHub Actions or Azure DevOps (no secrets needed) |
 
 ---
 
@@ -82,16 +81,16 @@ terraform init -input=false \
 
 ---
 
-## Option 2: GitHub Actions OIDC
+## Option 2: OIDC Authentication (GitHub Actions / Azure DevOps)
 
-This approach uses Workload Identity Federation with GitHub Actions, eliminating the need for stored secrets.
+This approach uses Workload Identity Federation, eliminating the need for stored secrets. The same `oidc/` folder supports both GitHub Actions and Azure DevOps.
 
 [Terraform Backend Docs for OIDC](https://developer.hashicorp.com/terraform/language/settings/backends/azurerm#backend-azure-ad-service-principal-or-user-assigned-managed-identity-via-oidc-workload-identity-federation)
 
 ### What you will get
 
-- A service principal configured for GitHub Actions OIDC authentication
-- A federated credential using `claimsMatchingExpression` for flexible repository/branch matching
+- A service principal configured for OIDC authentication
+- A federated credential for GitHub Actions or Azure DevOps
 - A Storage Container used to store the Terraform state file
 
 ### Requirements
@@ -105,33 +104,97 @@ This approach uses Workload Identity Federation with GitHub Actions, eliminating
 
 1. Authenticate against Azure by executing `az login`
 2. Optional: Export your Tenant (`tenantId`) and Subscription ID (`subscriptionId`) if you don't like to deploy with your `az` defaults.
-3. Customize `oidc-github/.env` based on your needs and naming conventions (Make sure you met all [Azure naming rules and restrictions](https://docs.microsoft.com/azure/azure-resource-manager/management/resource-name-rules)).
-4. Update `oidc-github/federated_credential.json`:
-   - Replace `<stage>` with your environment name (e.g., `dev`, `prod`)
-   - Replace `<organizationName>` with your GitHub organization or username
-   - Replace `<repositoryName>` with your GitHub repository name
-5. Execute `oidc-github/up.sh` to deploy everything needed
-6. Add the output secrets to your GitHub repository settings
-7. Grant admin consent for the created app registrations (Terraform will then be allowed to create app registrations and groups in Entra ID). This needs Azure Active Directory global admin access. Find more details on how to grant consent [here](https://docs.microsoft.com/en-us/azure/active-directory/manage-apps/grant-admin-consent).
+3. Customize `oidc/.env` based on your needs and naming conventions (Make sure you met all [Azure naming rules and restrictions](https://docs.microsoft.com/azure/azure-resource-manager/management/resource-name-rules)).
+4. **Choose your CI/CD platform** by editing `oidc/up.sh`:
+   - For GitHub Actions: Set `FEDERATED_CREDENTIAL_FILE="federated_credential_github.json"`
+   - For Azure DevOps: Set `FEDERATED_CREDENTIAL_FILE="federated_credential_ado.json"`
+5. Update the corresponding federated credential JSON file:
+   - **GitHub Actions** (`federated_credential_github.json`):
+     - Replace `<organizationName>` with your GitHub organization or username
+     - Replace `<repositoryName>` with your GitHub repository name
+     - Replace `<environment>` with your environment name (e.g., `dev`, `prod`)
+   - **Azure DevOps** (`federated_credential_ado.json`):
+     - Replace `<organizationId>` with your Azure DevOps organization ID (GUID)
+     - Replace `<organizationName>` with your Azure DevOps organization name
+     - Replace `<projectName>` with your project name
+     - Replace `<serviceConnectionName>` with your service connection name
+6. Execute `oidc/up.sh` to deploy everything needed
+7. Add the output secrets to your CI/CD platform settings
+8. Grant admin consent for the created app registrations (Terraform will then be allowed to create app registrations and groups in Entra ID). This needs Azure Active Directory global admin access. Find more details on how to grant consent [here](https://docs.microsoft.com/en-us/azure/active-directory/manage-apps/grant-admin-consent).
 
 ### Get started with PowerShell
 
 1. Authenticate against Azure by executing `az login`
 2. Optional: Create environment variables for Tenant (`tenantId`) and Subscription ID (`subscriptionId`) or call the script with the parameters `-tenantId` and `-subscriptionId` if you don't like to deploy with your `az` defaults.
-3. Customize `oidc-github/.env.powershell` based on your needs and naming conventions (Make sure you met all [Azure naming rules and restrictions](https://docs.microsoft.com/azure/azure-resource-manager/management/resource-name-rules)).
-4. Update `oidc-github/federated_credential.json`:
-   - Replace `<stage>` with your environment name (e.g., `dev`, `prod`)
-   - Replace `<organizationName>` with your GitHub organization or username
-   - Replace `<repositoryName>` with your GitHub repository name
-5. Execute `oidc-github/up.ps1` to deploy everything needed
-6. Add the output secrets to your GitHub repository settings
-7. Grant admin consent for the created app registrations (Terraform will then be allowed to create app registrations and groups in Entra ID). This needs Azure Active Directory global admin access. Find more details on how to grant consent [here](https://docs.microsoft.com/en-us/azure/active-directory/manage-apps/grant-admin-consent).
+3. Customize `oidc/.env.powershell` based on your needs and naming conventions (Make sure you met all [Azure naming rules and restrictions](https://docs.microsoft.com/azure/azure-resource-manager/management/resource-name-rules)).
+4. **Choose your CI/CD platform** by editing `oidc/up.ps1`:
+   - For GitHub Actions: Set `$FEDERATED_CREDENTIAL_FILE = "federated_credential_github.json"`
+   - For Azure DevOps: Set `$FEDERATED_CREDENTIAL_FILE = "federated_credential_ado.json"`
+5. Update the corresponding federated credential JSON file (see Bash instructions above for details)
+6. Execute `oidc/up.ps1` to deploy everything needed
+7. Add the output secrets to your CI/CD platform settings
+8. Grant admin consent for the created app registrations (Terraform will then be allowed to create app registrations and groups in Entra ID). This needs Azure Active Directory global admin access. Find more details on how to grant consent [here](https://docs.microsoft.com/en-us/azure/active-directory/manage-apps/grant-admin-consent).
 
-### Federated Credential Configuration
+### Federated Credential Configuration (GitHub Actions)
 
-The `federated_credential.json` uses `claimsMatchingExpression` which provides more flexibility than the traditional `subject` field. The pattern `repo:<org>/<repo>:*` matches all branches and environments.
+There are two approaches for configuring federated credentials with GitHub Actions:
 
-#### Examples
+#### Option A: Using `subject` with GitHub Environments (Recommended)
+
+If you are using [GitHub Environments](https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment) (available in GitHub Free for public repositories, and GitHub Pro, Team, and Enterprise for private repositories), you can use the `subject` field with the Azure CLI:
+
+```json
+{
+    "name": "github-<environment>",
+    "issuer": "https://token.actions.githubusercontent.com",
+    "subject": "repo:<organizationName>/<repositoryName>:environment:<environment>",
+    "description": "GitHub Actions <environment> Environment",
+    "audiences": ["api://AzureADTokenExchange"]
+}
+```
+
+**Advantages:**
+- Uses the stable GA (General Availability) Graph API
+- Full Azure CLI support via `az ad app federated-credential create`
+- Terraform provider compatibility (`azuread_application_federated_identity_credential`)
+- Explicit security control per environment
+
+**Limitations:**
+- Exact matching only – no wildcards or patterns
+- Requires a separate credential for each environment, branch, or pull request scenario
+- Maximum of 20 federated credentials per App Registration
+
+#### Option B: Using `claimsMatchingExpression` (Flexible Matching)
+
+If you do not have access to GitHub Environments (e.g., GitHub Free for private repositories) or need flexible pattern matching across multiple branches and pull requests, you must use `claimsMatchingExpression`:
+
+```json
+{
+    "name": "github-<stage>",
+    "issuer": "https://token.actions.githubusercontent.com",
+    "claimsMatchingExpression": {
+        "value": "claims['sub'] matches 'repo:<organizationName>/<repositoryName>:*'",
+        "languageVersion": 1
+    },
+    "description": "GitHub Actions OIDC for <stage>",
+    "audiences": ["api://AzureADTokenExchange"]
+}
+```
+
+**Advantages:**
+- Wildcard and pattern matching (e.g., `repo:org/repo:*` matches all branches, PRs, and environments)
+- Single credential can cover multiple scenarios
+- Reduces management overhead for dynamic environments
+
+**Limitations:**
+- Requires the Microsoft Graph **Beta API** (not GA)
+- No native Azure CLI support – must use `az rest` with the Beta endpoint
+- No Terraform provider support
+- Beta APIs may change without notice
+
+> **Note:** The scripts in this repository use `subject` with GitHub Environments via `az ad app federated-credential create`. If you need flexible pattern matching without environments (e.g., GitHub Free for private repositories), update `federated_credential.json` to use `claimsMatchingExpression` and switch to `az rest` with the Beta Graph API endpoint.
+
+#### claimsMatchingExpression Examples
 
 Match all branches and pull requests:
 ```json
@@ -197,42 +260,37 @@ jobs:
 
 ---
 
-## Option 3: Azure DevOps OIDC
+### Azure DevOps Pipeline Example
 
-This approach uses Workload Identity Federation with Azure DevOps Pipelines, eliminating the need for stored secrets.
+```yaml
+trigger:
+  - main
 
-[Terraform Backend Docs for OIDC](https://developer.hashicorp.com/terraform/language/settings/backends/azurerm#backend-azure-ad-service-principal-or-user-assigned-managed-identity-via-oidc-workload-identity-federation)
+pool:
+  vmImage: ubuntu-latest
 
-### What you will get
-
-- A service principal configured for Azure DevOps OIDC authentication
-- A federated credential for your Azure DevOps organization/project
-- A Storage Container used to store the Terraform state file
-
-### Requirements
-
-- Bash or PowerShell (you can use [Azure Cloud Shell](http://shell.azure.com/))
-- For Bash you need to have [jq](https://stedolan.github.io/jq/) installed
-- Azure CLI (authenticated)
-- The executing user needs Subscription Owner access (or Contributor + User Access Administrator/Role Based Access Control Administrator) to create resources and assign Contributor and Role Based Access Control Administrator roles to the Service Principal, as well as the Application Developer role in Entra ID (to create the Service Principal)
-
-### Get started with Bash
-
-1. Authenticate against Azure by executing `az login`
-2. Optional: Export your Tenant (`tenantId`) and Subscription ID (`subscriptionId`) if you don't like to deploy with your `az` defaults.
-3. Customize `oidc-ado/.env` based on your needs and naming conventions (Make sure you met all [Azure naming rules and restrictions](https://docs.microsoft.com/azure/azure-resource-manager/management/resource-name-rules)).
-4. Update the `<tokens>` in `oidc-ado/federated_credential.json`.
-5. Execute `oidc-ado/up.sh` to deploy everything needed
-6. Grant admin consent for the created app registrations (Terraform will then be allowed to create app registrations and groups in Entra ID). This needs Azure Active Directory global admin access. Find more details on how to grant consent [here](https://docs.microsoft.com/en-us/azure/active-directory/manage-apps/grant-admin-consent).
-
-### Get started with PowerShell
-
-1. Authenticate against Azure by executing `az login`
-2. Optional: Create environment variables for Tenant (`tenantId`) and Subscription ID (`subscriptionId`) or call the script with the parameters `-tenantId` and `-subscriptionId` if you don't like to deploy with your `az` defaults.
-3. Customize `oidc-ado/.env.powershell` based on your needs and naming conventions (Make sure you met all [Azure naming rules and restrictions](https://docs.microsoft.com/azure/azure-resource-manager/management/resource-name-rules)).
-4. Update the `<tokens>` in `oidc-ado/federated_credential.json`.
-5. Execute `oidc-ado/up.ps1` to deploy everything needed
-6. Grant admin consent for the created app registrations (Terraform will then be allowed to create app registrations and groups in Entra ID). This needs Azure Active Directory global admin access. Find more details on how to grant consent [here](https://docs.microsoft.com/en-us/azure/active-directory/manage-apps/grant-admin-consent).
+stages:
+  - stage: Terraform
+    jobs:
+      - job: TerraformPlan
+        steps:
+          - task: AzureCLI@2
+            displayName: 'Terraform Init & Plan'
+            inputs:
+              azureSubscription: '<serviceConnectionName>'
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              addSpnToEnvironment: true
+              inlineScript: |
+                export ARM_CLIENT_ID=$servicePrincipalId
+                export ARM_OIDC_TOKEN=$idToken
+                export ARM_TENANT_ID=$tenantId
+                export ARM_SUBSCRIPTION_ID=$(az account show --query id -o tsv)
+                export ARM_USE_OIDC=true
+                
+                terraform init
+                terraform plan
+```
 
 ---
 

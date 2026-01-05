@@ -150,11 +150,10 @@ if (-not $?) {
 Write-Host "Roles updated..."
 
 # Create federated credential for GitHub Actions
-# Using Graph API beta endpoint for claimsMatchingExpression support
 $parametersPath = "./federated_credential.json"
-az rest --method post `
-    --url "https://graph.microsoft.com/beta/applications/$appObjectId/federatedIdentityCredentials" `
-    --body "@$parametersPath"
+az ad app federated-credential create `
+    --id "$appObjectId" `
+    --parameters "@$parametersPath"
 if (-not $?) {
     throw "Failed to create federated credential"
 }

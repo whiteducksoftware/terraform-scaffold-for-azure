@@ -9,6 +9,20 @@ param (
     $tenantId = $env:tenantId
 )
 
+#######################################
+# Terraform Scaffold for Azure
+# OIDC Authentication Setup
+# Supports both GitHub Actions and Azure DevOps
+#######################################
+
+#######################################
+# CONFIGURATION - Edit before running
+#######################################
+# Choose the federated credential file:
+# - "federated_credential_github.json" for GitHub Actions
+# - "federated_credential_ado.json" for Azure DevOps
+$FEDERATED_CREDENTIAL_FILE = "federated_credential_github.json"
+
 # Error trapping
 trap {
     Write-Host "Error on line $($($_.InvocationInfo.ScriptLineNumber)): $($_.Exception.Message)"
@@ -89,6 +103,7 @@ $sp = az ad sp list --display-name $spName --query "[].displayName" -o tsv
 if ($sp -eq $spName) {
     Write-Host "Service principal already exists..."
     $spId = az ad sp list --display-name $spName --query "[].appId" -o tsv
+    $appObjectId = az ad app show --id $spId --query "id" -o tsv
 }
 else {
     # Create service principal without initial role assignment
@@ -99,14 +114,8 @@ else {
     # Set service principal id variable
     $spId = $sp.appId
     $spSecret = $sp.password
-    
-    # Create federated credential
-    $parametersPath = "./federated_credential.json"
-    az ad app federated-credential create --id $spId --parameters $parametersPath
-    if (-not $?) {
-        throw "Failed to create federated credential"
-    }
-    Write-Host "Federated credential created..."
+    # Get appObjectId
+    $appObjectId = az ad app show --id $spId --query "id" -o tsv
     
     # Assign Contributor role for resource management
     az role assignment create `
@@ -144,15 +153,25 @@ if (-not $?) {
 }
 Write-Host "Entra ID API permissions added..."
 
-# Update roles
+# Assign Monitoring Metrics Publisher role
 az role assignment create `
     --assignee "$spId" `
     --scope "/subscriptions/$subscriptionId" `
     --role "Monitoring Metrics Publisher"
 if (-not $?) {
-    throw "Failed to update roles"
+    throw "Failed to assign Monitoring Metrics Publisher role"
 }
-Write-Host "Roles updated..."
+Write-Host "Monitoring Metrics Publisher role assigned..."
+
+# Create federated credential
+$parametersPath = "./$FEDERATED_CREDENTIAL_FILE"
+az ad app federated-credential create `
+    --id "$appObjectId" `
+    --parameters "@$parametersPath"
+if (-not $?) {
+    throw "Failed to create federated credential"
+}
+Write-Host "Federated credential created from $FEDERATED_CREDENTIAL_FILE..."
 
 # Get local user
 $userId = az ad signed-in-user show --query id -o tsv
@@ -179,15 +198,15 @@ if (-not $?) {
 }
 Write-Host "Deployment created..."
 
-# Update roles
+# Assign Storage Blob Data Owner role
 az role assignment create `
     --assignee "$spId" `
     --scope "/subscriptions/$subscriptionId/resourceGroups/$rg/providers/Microsoft.Storage/storageAccounts/$saName" `
     --role "Storage Blob Data Owner"
 if (-not $?) {
-    throw "Failed to update roles"
+    throw "Failed to assign Storage Blob Data Owner role"
 }
-Write-Host "Roles updated..."
+Write-Host "Storage Blob Data Owner role assigned..."
 
 # Map Partner ID (optional)
 Write-Host "---"

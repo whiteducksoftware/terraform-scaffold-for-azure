@@ -127,10 +127,9 @@ az role assignment create \
 echo "Service principal role updated..."
 
 # Create federated credential for GitHub Actions
-# Using Graph API beta endpoint for claimsMatchingExpression support
-az rest --method post \
-    --url "https://graph.microsoft.com/beta/applications/$appObjectId/federatedIdentityCredentials" \
-    --body @federated_credential.json
+az ad app federated-credential create \
+    --id "$appObjectId" \
+    --parameters @federated_credential.json
 echo "Federated credential created..."
 
 # Creates resources
