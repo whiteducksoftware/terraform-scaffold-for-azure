@@ -9,8 +9,7 @@ param tag string
 param location string
 param roleId string = 'b86a8fe4-44ce-4948-aee5-eccb2c155cd7' // Key Vault Officer
 
-
-resource tf_akv 'Microsoft.KeyVault/vaults@2022-07-01' = {
+resource tf_akv 'Microsoft.KeyVault/vaults@2025-05-01' = {
   name: vault_name
   location: location
   tags: {
@@ -29,7 +28,7 @@ resource tf_akv 'Microsoft.KeyVault/vaults@2022-07-01' = {
   }
 }
 
-resource tf_sa 'Microsoft.Storage/storageAccounts@2022-09-01' = {
+resource tf_sa 'Microsoft.Storage/storageAccounts@2025-06-01' = {
   name: sa_name
   location: location
   tags: {
@@ -62,12 +61,12 @@ resource tf_sa 'Microsoft.Storage/storageAccounts@2022-09-01' = {
   }
 }
 
-resource tf_sb 'Microsoft.Storage/storageAccounts/blobServices@2022-09-01' existing = {
+resource tf_sb 'Microsoft.Storage/storageAccounts/blobServices@2025-06-01' existing = {
   parent: tf_sa
   name: 'default'
 }
 
-resource tf_sc 'Microsoft.Storage/storageAccounts/blobServices/containers@2022-09-01' = {
+resource tf_sc 'Microsoft.Storage/storageAccounts/blobServices/containers@2025-06-01' = {
   parent: tf_sb
   name: sc_name
 }

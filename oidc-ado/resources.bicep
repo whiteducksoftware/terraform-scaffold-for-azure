@@ -4,7 +4,7 @@ param sc_name string
 param tag string
 param location string
 
-resource tf_sa 'Microsoft.Storage/storageAccounts@2023-01-01' = {
+resource tf_sa 'Microsoft.Storage/storageAccounts@2025-06-01' = {
   name: sa_name
   location: location
   tags: {
@@ -38,7 +38,7 @@ resource tf_sa 'Microsoft.Storage/storageAccounts@2023-01-01' = {
   }
 }
 
-resource tf_sb 'Microsoft.Storage/storageAccounts/blobServices@2023-01-01' = {
+resource tf_sb 'Microsoft.Storage/storageAccounts/blobServices@2025-06-01' = {
   parent: tf_sa
   name: 'default'
   properties: {
@@ -55,7 +55,7 @@ resource tf_sb 'Microsoft.Storage/storageAccounts/blobServices@2023-01-01' = {
   }
 }
 
-resource tf_sc 'Microsoft.Storage/storageAccounts/blobServices/containers@2023-01-01' = {
+resource tf_sc 'Microsoft.Storage/storageAccounts/blobServices/containers@2025-06-01' = {
   parent: tf_sb
   name: sc_name
 }

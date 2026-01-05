@@ -126,7 +126,7 @@ else {
     Write-Host "Role Based Access Control Administrator role assigned with condition..."
 }
 
-# Add API permissions - Group.ReadWrite.All, GroupMember.ReadWrite.All, User.Read.All
+# Add Entra ID API permissions - Group.ReadWrite.All, GroupMember.ReadWrite.All, User.Read.All
 az ad app permission add `
     --id "$spId" `
     --api 00000003-0000-0000-c000-000000000000 `
@@ -135,7 +135,7 @@ az ad app permission add `
     dbaae8cf-10b5-4b86-a4a1-f871c94c6695=Role `
     df021288-bdef-4463-88db-98f22de89214=Role
 if (-not $?) {
-    throw "Failed to add API permissions"
+    throw "Failed to add Entra ID API permissions"
 }
 Write-Host "API permissions added..."
 
