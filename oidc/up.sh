@@ -185,17 +185,21 @@ az role assignment create \
 echo "Storage Blob Data Owner role assigned..."
 
 #######################################
-# Map Partner ID (optional)
+# Map Partner ID (optional, only if secret available)
 #######################################
 echo "---"
-read -p "Do you like to map our Partner ID? [y/N] " response
-if [[ "$response" =~ ^([yY][eE][sS]|[yY])$ ]]; then
-    az extension add --name managementpartner --upgrade --yes
-    az login --tenant "$tenantId" --service-principal -u "$spId" -p "$spSecret"
-    az managementpartner create --partner-id 3699617
-    az logout
-    AZURE_CORE_LOGIN_EXPERIENCE_V2=off az login --tenant "$tenantId"
-    az account set --subscription "$subscriptionId"
+if [ -n "$spSecret" ]; then
+    read -p "Do you like to map our Partner ID? [y/N] " response
+    if [[ "$response" =~ ^([yY][eE][sS]|[yY])$ ]]; then
+        az extension add --name managementpartner --upgrade --yes
+        az login --tenant "$tenantId" --service-principal -u "$spId" -p "$spSecret"
+        az managementpartner create --partner-id 3699617
+        az logout
+        AZURE_CORE_LOGIN_EXPERIENCE_V2=off az login --tenant "$tenantId"
+        az account set --subscription "$subscriptionId"
+    fi
+else
+    echo "Skipping Partner ID mapping (SP already existed, no secret available)..."
 fi
 
 # Remove the service principal secret (OIDC-only, no secret needed)

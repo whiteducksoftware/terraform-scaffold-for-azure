@@ -201,17 +201,22 @@ if (-not $?) {
 }
 Write-Host "Storage Blob Data Owner role assigned..."
 
-# Map Partner ID (optional)
+# Map Partner ID (optional, only if secret available)
 Write-Host "---"
-$response = Read-Host "Do you like to map our Partner ID? [y/N]"
-if ($response -imatch "^(y|yes)$") {
-    az extension add --name managementpartner --upgrade --yes
-    az login --tenant "$tenantId" --service-principal -u "$spId" -p "$spSecret"
-    az managementpartner create --partner-id 3699617
-    az logout
-    $env:AZURE_CORE_LOGIN_EXPERIENCE_V2 = "off"
-    az login --tenant "$tenantId"
-    az account set --subscription "$subscriptionId"
+if ($spSecret) {
+    $response = Read-Host "Do you like to map our Partner ID? [y/N]"
+    if ($response -imatch "^(y|yes)$") {
+        az extension add --name managementpartner --upgrade --yes
+        az login --tenant "$tenantId" --service-principal -u "$spId" -p "$spSecret"
+        az managementpartner create --partner-id 3699617
+        az logout
+        $env:AZURE_CORE_LOGIN_EXPERIENCE_V2 = "off"
+        az login --tenant "$tenantId"
+        az account set --subscription "$subscriptionId"
+    }
+}
+else {
+    Write-Host "Skipping Partner ID mapping (SP already existed, no secret available)..."
 }
 
 # Remove the service principal secret (OIDC-only, no secret needed)
