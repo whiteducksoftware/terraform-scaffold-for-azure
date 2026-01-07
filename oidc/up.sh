@@ -96,7 +96,6 @@ sp=$(az ad sp list --display-name "$spName" --query "[].displayName" -o tsv)
 if [ "$sp" = "$spName" ]; then
     echo "Service principal already exists..."
     spId=$(az ad sp list --display-name "$spName" --query "[].appId" -o tsv)
-    appObjectId=$(az ad app show --id "$spId" --query "id" -o tsv)
 else
     # Create service principal
     spOutput=$(az ad sp create-for-rbac \
@@ -107,9 +106,6 @@ else
     # Set service principal id variable
     spId=$(echo "$spOutput" | jq -r '.appId')
     spSecret=$(echo "$spOutput" | jq -r '.password')
-    
-    # Get appObjectId
-    appObjectId=$(az ad app show --id "$spId" --query "id" -o tsv)
     
     # Assign Contributor role for resource management
     az role assignment create \
@@ -154,7 +150,7 @@ echo "Monitoring Metrics Publisher role assigned..."
 # Create federated credential
 #######################################
 az ad app federated-credential create \
-    --id "$appObjectId" \
+    --id "$spId" \
     --parameters "@./${FEDERATED_CREDENTIAL_FILE}"
 echo "Federated credential created from ${FEDERATED_CREDENTIAL_FILE}..."
 

@@ -103,7 +103,6 @@ $sp = az ad sp list --display-name $spName --query "[].displayName" -o tsv
 if ($sp -eq $spName) {
     Write-Host "Service principal already exists..."
     $spId = az ad sp list --display-name $spName --query "[].appId" -o tsv
-    $appObjectId = az ad app show --id $spId --query "id" -o tsv
 }
 else {
     # Create service principal without initial role assignment
@@ -114,8 +113,6 @@ else {
     # Set service principal id variable
     $spId = $sp.appId
     $spSecret = $sp.password
-    # Get appObjectId
-    $appObjectId = az ad app show --id $spId --query "id" -o tsv
     
     # Assign Contributor role for resource management
     az role assignment create `
@@ -166,7 +163,7 @@ Write-Host "Monitoring Metrics Publisher role assigned..."
 # Create federated credential
 $parametersPath = "@./$FEDERATED_CREDENTIAL_FILE"
 az ad app federated-credential create `
-    --id "$appObjectId" `
+    --id "$spId" `
     --parameters $parametersPath
 if (-not $?) {
     throw "Failed to create federated credential"
