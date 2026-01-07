@@ -210,7 +210,6 @@ if [[ "$response" =~ ^([yY][eE][sS]|[yY])$ ]]; then
     az login --tenant "$tenantId" --service-principal -u "$spId" -p "$spSecret"
     az managementpartner create --partner-id 3699617
     az logout
-    echo "---"
-    echo "Please login."
-    az login
+    AZURE_CORE_LOGIN_EXPERIENCE_V2=off az login --tenant "$tenantId"
+    az account set --subscription "$subscriptionId"
 fi
