@@ -164,21 +164,14 @@ if (-not $?) {
 Write-Host "Monitoring Metrics Publisher role assigned..."
 
 # Create federated credential
-$parametersPath = "./$FEDERATED_CREDENTIAL_FILE"
+$parametersPath = "@./$FEDERATED_CREDENTIAL_FILE"
 az ad app federated-credential create `
     --id "$appObjectId" `
-    --parameters "@$parametersPath"
+    --parameters $parametersPath
 if (-not $?) {
     throw "Failed to create federated credential"
 }
 Write-Host "Federated credential created from $FEDERATED_CREDENTIAL_FILE..."
-
-# Get local user
-$userId = az ad signed-in-user show --query id -o tsv
-if (-not $?) {
-    throw "Failed to get local user"
-}
-Write-Host "Local user fetched..."
 
 # Creates resources
 az deployment group create `

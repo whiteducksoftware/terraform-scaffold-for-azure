@@ -19,7 +19,7 @@ FEDERATED_CREDENTIAL_FILE="federated_credential_github.json"
 # Load environment variables
 #######################################
 if [ -f .env ]; then
-    export $(grep -v '^#' .env | xargs)
+    source .env
 else
     echo "Error: .env file not found"
     exit 1
@@ -48,15 +48,6 @@ if [ -z "$tenantId" ]; then
     fi
 fi
 echo "Tenant ID set to $tenantId"
-
-#######################################
-# Declare dependent variables
-#######################################
-spName="sp-${name}-${suffix}"
-rg="rg-${name}-${suffix}"
-tag="${suffix}"
-saName="stac0${name}0${suffix}"
-scName="blob0${name}0${suffix}"
 
 #######################################
 # Set subscription
@@ -166,12 +157,6 @@ az ad app federated-credential create \
     --id "$appObjectId" \
     --parameters "@./${FEDERATED_CREDENTIAL_FILE}"
 echo "Federated credential created from ${FEDERATED_CREDENTIAL_FILE}..."
-
-#######################################
-# Get local user
-#######################################
-userId=$(az ad signed-in-user show --query id -o tsv)
-echo "Local user fetched..."
 
 #######################################
 # Deploy resources
