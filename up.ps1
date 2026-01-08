@@ -9,6 +9,20 @@ param (
     $tenantId = $env:tenantId
 )
 
+#######################################
+# Terraform Scaffold for Azure
+# OIDC Authentication Setup
+# Supports both GitHub Actions and Azure DevOps
+#######################################
+
+#######################################
+# CONFIGURATION - Edit before running
+#######################################
+# Choose the federated credential file:
+# - "federated_credential_github.json" for GitHub Actions
+# - "federated_credential_ado.json" for Azure DevOps
+$FEDERATED_CREDENTIAL_FILE = "federated_credential_github.json"
+
 # Error trapping
 trap {
     Write-Host "Error on line $($($_.InvocationInfo.ScriptLineNumber)): $($_.Exception.Message)"
@@ -44,7 +58,6 @@ $rg = "rg-$($envVars['name'])-$($envVars['suffix'])"
 $tag = $envVars['suffix']
 $saName = "stac0$($envVars['name'])0$($envVars['suffix'])"
 $scName = "blob0$($envVars['name'])0$($envVars['suffix'])"
-$vaultName = "akv-$($envVars['name'])-$($envVars['suffix'])"
 
 # Set subscription
 az account set --subscription "$subscriptionId"
@@ -97,9 +110,9 @@ else {
         --name $spName `
         --years 99 | ConvertFrom-Json
     Write-Host "Service principal created..."
-    # Set service principal id and secret variables
-    $spSecret = $sp.password
+    # Set service principal id variable
     $spId = $sp.appId
+    $spSecret = $sp.password
     
     # Assign Contributor role for resource management
     az role assignment create `
@@ -137,22 +150,25 @@ if (-not $?) {
 }
 Write-Host "Entra ID API permissions added..."
 
-# Update roles
+# Assign Monitoring Metrics Publisher role
 az role assignment create `
     --assignee "$spId" `
     --scope "/subscriptions/$subscriptionId" `
     --role "Monitoring Metrics Publisher"
 if (-not $?) {
-    throw "Failed to update roles"
+    throw "Failed to assign Monitoring Metrics Publisher role"
 }
-Write-Host "Roles updated..."
+Write-Host "Monitoring Metrics Publisher role assigned..."
 
-# Get local user
-$userId = az ad signed-in-user show --query id -o tsv
+# Create federated credential
+$parametersPath = "@./$FEDERATED_CREDENTIAL_FILE"
+az ad app federated-credential create `
+    --id "$spId" `
+    --parameters $parametersPath
 if (-not $?) {
-    throw "Failed to get local user"
+    throw "Failed to create federated credential"
 }
-Write-Host "Local user fetched..."
+Write-Host "Federated credential created from $FEDERATED_CREDENTIAL_FILE..."
 
 # Creates resources
 az deployment group create `
@@ -162,13 +178,9 @@ az deployment group create `
     --subscription "$subscriptionId" `
     --mode Incremental `
     --parameters `
-    vault_name="$vaultName" `
-    vault_sku="$($envVars['vaultSku'])" `
     sa_name="$saName" `
     sa_sku="$($envVars['saSku'])" `
     sc_name="$scName" `
-    tenant_id="$tenantId" `
-    user_id="$userId" `
     tag="$tag" `
     location="$($envVars['location'])"
 if (-not $?) {
@@ -176,83 +188,37 @@ if (-not $?) {
 }
 Write-Host "Deployment created..."
 
-# Gets storage account key
-$saKey = az storage account keys list `
-    --subscription="$subscriptionId" `
-    --resource-group "$rg" `
-    --account-name "$saName" `
-    --query [0].value `
-    -o tsv
-if (-not $?) {
-    throw "Failed to get storage account key"
-}
-Write-Host "Storage account key fetched..."
-
-# Save storage account details to vault
-az keyvault secret set --vault-name "$vaultName" `
-    --name "sa-key" `
-    --value "$saKey"
-az keyvault secret set --vault-name "$vaultName" `
-    --name "sa-name" `
-    --value "$saName"
-az keyvault secret set --vault-name "$vaultName" `
-    --name "sc-name" `
-    --value "$scName"
-if (-not $?) {
-    throw "Failed to save storage account details to vault"
-}
-Write-Host "Storage account details saved to vault..."
-
-# Save service principal details to vault
-az keyvault secret set --vault-name "$vaultName" `
-    --name "sp-id" `
-    --value "$spId"
-
-# Save subscription id to vault
-az keyvault secret set --vault-name "$vaultName" `
-    --name "subscription-id" `
-    --value "$subscriptionId"
-
-# Check if secret already exists and if not, set it
-$secretList = az keyvault secret list --vault-name $vaultName --query "[].name" -o tsv
-if ($secretList -match "sp-secret") {
-    Write-Host "SP secret already exists..."
-}
-elseif ([string]::IsNullOrEmpty($spSecret)) {
-    Write-Host "spSecret is not set. Please enter the value:"
-    $spSecret = Read-Host
-    az keyvault secret set --vault-name $vaultName `
-        --name "sp-secret" `
-        --value $spSecret
-    Write-Host "Secrets are saved in vault..."
-}
-else {
-    az keyvault secret set --vault-name $vaultName `
-        --name "sp-secret" `
-        --value $spSecret
-    Write-Host "Secrets are saved in vault..."
-}
-Write-Host "Service principal details saved to vault..."
-
-# Add vault access
+# Assign Storage Blob Data Owner role
 az role assignment create `
     --assignee "$spId" `
-    --role "Key Vault Secrets Officer" `
-    --scope "/subscriptions/$subscriptionId/resourceGroups/$rg/providers/Microsoft.KeyVault/vaults/$vaultName"
+    --scope "/subscriptions/$subscriptionId/resourceGroups/$rg/providers/Microsoft.Storage/storageAccounts/$saName" `
+    --role "Storage Blob Data Owner"
 if (-not $?) {
-    throw "Failed to create role assignment"
+    throw "Failed to assign Storage Blob Data Owner role"
 }
-Write-Host "Role assignment created"
+Write-Host "Storage Blob Data Owner role assigned..."
 
-# Map Partner ID (optional)
+# Map Partner ID (optional, only if secret available)
 Write-Host "---"
-$response = Read-Host "Do you like to map our Partner ID? [y/N]"
-if ($response -imatch "^(y|yes)$") {
-    az extension add --name managementpartner --upgrade --yes
-    az login --tenant "$tenantId" --service-principal -u "$spId" -p "$spSecret"
-    az managementpartner create --partner-id 3699617
-    az logout
-    $env:AZURE_CORE_LOGIN_EXPERIENCE_V2 = "off"
-    az login --tenant "$tenantId"
-    az account set --subscription "$subscriptionId"
+if ($spSecret) {
+    $response = Read-Host "Do you like to map our Partner ID? [y/N]"
+    if ($response -imatch "^(y|yes)$") {
+        az extension add --name managementpartner --upgrade --yes
+        az login --tenant "$tenantId" --service-principal -u "$spId" -p "$spSecret"
+        az managementpartner create --partner-id 3699617
+        az logout
+        $env:AZURE_CORE_LOGIN_EXPERIENCE_V2 = "off"
+        az login --tenant "$tenantId"
+        az account set --subscription "$subscriptionId"
+    }
+}
+else {
+    Write-Host "Skipping Partner ID mapping (SP already existed, no secret available)..."
+}
+
+# Remove the service principal secret (OIDC-only, no secret needed)
+$keyId = az ad app credential list --id "$spId" --query "[0].keyId" -o tsv
+if ($keyId) {
+    az ad app credential delete --id "$spId" --key-id "$keyId"
+    Write-Host "Temporary secret removed (OIDC-only)..."
 }
