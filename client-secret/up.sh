@@ -202,6 +202,13 @@ az role assignment create \
     --scope "/subscriptions/$subscriptionId/resourceGroups/$rg/providers/Microsoft.KeyVault/vaults/$vaultName"
 echo "Role for Service Principal set"
 
+# Assign Storage Blob Data Owner role
+az role assignment create \
+    --assignee "$spId" \
+    --scope "/subscriptions/$subscriptionId/resourceGroups/$rg/providers/Microsoft.Storage/storageAccounts/$saName" \
+    --role "Storage Blob Data Owner"
+echo "Storage Blob Data Owner role assigned..."
+
 # Map Partner ID (optional)
 echo "---"
 read -r -p "Do you like to map our Partner ID? [y/N] " response

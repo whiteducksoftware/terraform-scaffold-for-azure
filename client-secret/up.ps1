@@ -244,6 +244,16 @@ if (-not $?) {
 }
 Write-Host "Role assignment created"
 
+# Assign Storage Blob Data Owner role
+az role assignment create `
+    --assignee "$spId" `
+    --scope "/subscriptions/$subscriptionId/resourceGroups/$rg/providers/Microsoft.Storage/storageAccounts/$saName" `
+    --role "Storage Blob Data Owner"
+if (-not $?) {
+    throw "Failed to assign Storage Blob Data Owner role"
+}
+Write-Host "Storage Blob Data Owner role assigned..."
+
 # Map Partner ID (optional)
 Write-Host "---"
 $response = Read-Host "Do you like to map our Partner ID? [y/N]"
