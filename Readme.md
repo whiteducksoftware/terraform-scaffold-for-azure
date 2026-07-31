@@ -39,8 +39,11 @@ This approach uses Workload Identity Federation, eliminating the need for stored
 5. Update the corresponding federated credential JSON file:
    - **GitHub Actions** (`federated_credential_github.json`):
      - Replace `<organizationName>` with your GitHub organization or username
+     - Replace `<organizationId>` with the immutable ID of the GitHub organization or user
      - Replace `<repositoryName>` with your GitHub repository name
+     - Replace `<repositoryId>` with the immutable GitHub repository ID
      - Replace `<environment>` with your environment name (e.g., `dev`, `prod`)
+     - Follow [Immutable GitHub OIDC subjects](#immutable-github-oidc-subjects) to retrieve the exact subject prefix and, for an existing repository, enable the new format
    - **Azure DevOps** (`federated_credential_ado.json`):
      - Replace `<organizationId>` with your Azure DevOps organization ID (GUID)
      - Replace `<organizationName>` with your Azure DevOps organization name
@@ -64,6 +67,52 @@ This approach uses Workload Identity Federation, eliminating the need for stored
 8. Grant admin consent for the created app registrations (Terraform will then be allowed to create app registrations and groups in Entra ID). This needs Azure Active Directory global admin access. Find more details on how to grant consent [here](https://docs.microsoft.com/en-us/azure/active-directory/manage-apps/grant-admin-consent).
 
 ### Federated Credential Configuration (GitHub Actions)
+
+#### Immutable GitHub OIDC subjects
+
+GitHub's default OIDC `sub` claim now binds the owner and repository names to their immutable IDs:
+
+```text
+repo:<organizationName>@<organizationId>/<repositoryName>@<repositoryId>:environment:<environment>
+```
+
+> **Important:** Repositories created before July 15, 2026 must explicitly opt in to immutable OIDC subjects. Without the opt-in, GitHub continues to issue the legacy name-only subject (`repo:<organizationName>/<repositoryName>:...`), which does not match the immutable Azure federated credential configured by this scaffold.
+
+Repositories created on or after July 15, 2026 use the immutable format automatically. A repository rename or transfer on or after that date also enables the immutable format. This change applies to GitHub.com, not GitHub Enterprise Server.
+
+Use the GitHub API to retrieve the names and immutable IDs and build the new prefix:
+
+```bash
+export OWNER="<organizationName>"
+export REPOSITORY="<repositoryName>"
+
+gh api \
+  -H "X-GitHub-Api-Version: 2026-03-10" \
+  "repos/$OWNER/$REPOSITORY" \
+  --jq '"repo:\(.owner.login)@\(.owner.id)/\(.name)@\(.id)"'
+```
+
+Append the required context to the returned prefix, for example `:environment:prod`, and use the result in the Azure federated credential. To migrate without downtime, create this as an additional credential with a unique `name`, then opt the existing repository in so subsequent workflow tokens use the immutable subject:
+
+```bash
+gh api \
+  --method PUT \
+  -H "X-GitHub-Api-Version: 2026-03-10" \
+  "repos/$OWNER/$REPOSITORY/actions/oidc/customization/sub" \
+  -F use_default=true \
+  -F use_immutable_subject=true
+```
+
+Confirm the active prefix after opting in:
+
+```bash
+gh api \
+  -H "X-GitHub-Api-Version: 2026-03-10" \
+  "repos/$OWNER/$REPOSITORY/actions/oidc/customization/sub" \
+  --jq '{use_immutable_subject, sub_claim_prefix}'
+```
+
+After the workflow authenticates successfully, remove the old name-only Azure credential. Organization administrators can instead enable the format organization-wide through the organization OIDC settings or the corresponding [GitHub Actions OIDC REST API](https://docs.github.com/en/rest/actions/oidc). See the [Microsoft Entra migration guide](https://learn.microsoft.com/en-us/entra/workload-id/workload-identities-github-immutable-subjects) for the complete migration sequence.
 
 We do not recommend storing any secrets and credentials in code. Therefore everything needed will be requested from Key Vault as needed:
 
@@ -186,7 +235,7 @@ If you are using [GitHub Environments](https://docs.github.com/en/actions/deploy
 {
     "name": "github-<environment>",
     "issuer": "https://token.actions.githubusercontent.com",
-    "subject": "repo:<organizationName>/<repositoryName>:environment:<environment>",
+    "subject": "repo:<organizationName>@<organizationId>/<repositoryName>@<repositoryId>:environment:<environment>",
     "description": "GitHub Actions <environment> Environment",
     "audiences": ["api://AzureADTokenExchange"]
 }
@@ -212,7 +261,7 @@ If you do not have access to GitHub Environments (e.g., GitHub Free for private 
     "name": "github-<stage>",
     "issuer": "https://token.actions.githubusercontent.com",
     "claimsMatchingExpression": {
-        "value": "claims['sub'] matches 'repo:<organizationName>/<repositoryName>:*'",
+        "value": "claims['sub'] matches 'repo:<organizationName>@<organizationId>/<repositoryName>@<repositoryId>:*' and claims['repository_id'] eq '<repositoryId>'",
         "languageVersion": 1
     },
     "description": "GitHub Actions OIDC for <stage>",
@@ -221,7 +270,7 @@ If you do not have access to GitHub Environments (e.g., GitHub Free for private 
 ```
 
 **Advantages:**
-- Wildcard and pattern matching (e.g., `repo:org/repo:*` matches all branches, PRs, and environments)
+- Wildcard and pattern matching (e.g., `repo:org@123/repo@456:*` matches all branches, PRs, and environments; Azure also requires a `repository_id` or `repository_owner_id` condition)
 - Single credential can cover multiple scenarios
 - Reduces management overhead for dynamic environments
 
@@ -238,7 +287,7 @@ If you do not have access to GitHub Environments (e.g., GitHub Free for private 
 Match all branches and pull requests:
 ```json
 "claimsMatchingExpression": {
-    "value": "claims['sub'] matches 'repo:myorg/myrepo:*'",
+    "value": "claims['sub'] matches 'repo:myorg@123456/myrepo@456789:*' and claims['repository_id'] eq '456789'",
     "languageVersion": 1
 }
 ```
@@ -246,7 +295,7 @@ Match all branches and pull requests:
 Match only the main branch:
 ```json
 "claimsMatchingExpression": {
-    "value": "claims['sub'] == 'repo:myorg/myrepo:ref:refs/heads/main'",
+    "value": "claims['sub'] == 'repo:myorg@123456/myrepo@456789:ref:refs/heads/main' and claims['repository_id'] eq '456789'",
     "languageVersion": 1
 }
 ```
@@ -254,7 +303,7 @@ Match only the main branch:
 Match specific environment:
 ```json
 "claimsMatchingExpression": {
-    "value": "claims['sub'] == 'repo:myorg/myrepo:environment:production'",
+    "value": "claims['sub'] == 'repo:myorg@123456/myrepo@456789:environment:production' and claims['repository_id'] eq '456789'",
     "languageVersion": 1
 }
 ```
